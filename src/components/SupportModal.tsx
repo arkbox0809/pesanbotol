@@ -170,10 +170,14 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
             <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(220px,0.8fr)]">
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-sky-300 bg-sky-50/70 p-6 text-center">
                 <div className="flex h-44 w-44 items-center justify-center rounded-lg border-2 border-slate-300 bg-white text-slate-400">
-                  <QrCode size={112} strokeWidth={1.3} aria-hidden="true" />
+                  <img
+                    src="/images/merchant_qris_botol.jpg"
+                    alt="QRIS Merchant PesanBotol"
+                    className="h-full w-full object-contain"
+                  />
                 </div>
-                <p className="mt-3 font-mono text-[10px] uppercase text-sky-800">QRIS simulasi · bukan kode pembayaran</p>
-                <p className="mt-1 text-xs text-slate-600">Scan dengan m-Banking / E-Wallet</p>
+                <p className="mt-3 font-mono text-[10px] uppercase text-sky-800">QRIS Resmi Pembayaran</p>
+                <p className="mt-1 text-xs text-slate-600">Scan dengan m-Banking / E-Wallet apa saja</p>
               </div>
               <div className="flex flex-col justify-center rounded-xl border border-amber-200 bg-white/80 p-5">
                 <p className="font-mono text-[10px] uppercase text-amber-700">Rincian dukungan</p>

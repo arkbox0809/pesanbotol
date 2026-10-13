@@ -34,7 +34,11 @@ const SUPPORT_OPTIONS = [
 ] as const;
 
 type SupportOptionId = (typeof SUPPORT_OPTIONS)[number]['id'];
-type PaymentStep = 'options' | 'qris' | 'complete';
+type PaymentStep = 'options' | 'qris' | 'submitted' | 'complete';
+
+const WHATSAPP_NUMBER = '6282181294792';
+const SPECIAL_ACTIVATION_CODE = 'SUNGAI-SPECIAL-2026';
+const ARCHIVE_ACTIVATION_CODE = 'ARCHIVE-PASS';
 
 const SPECIAL_VARIANTS: { value: SpecialBottleType; label: string; description: string }[] = [
   { value: 'anchor', label: 'Botol Emas', description: 'Kilau abadi' },
@@ -58,6 +62,10 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
   const [selectedVariant, setSelectedVariant] = useState<SpecialBottleType>(initialVariant ?? 'anchor');
   const [tipAmount, setTipAmount] = useState('2000');
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('options');
+  const [remainingSeconds, setRemainingSeconds] = useState(5);
+  const [senderIdentity, setSenderIdentity] = useState('');
+  const [activationCode, setActivationCode] = useState('');
+  const [activationFeedback, setActivationFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     previousFocusRef.current = document.activeElement as HTMLElement | null;
@@ -74,6 +82,16 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
     };
   }, [onClose]);
 
+  useEffect(() => {
+    if (paymentStep !== 'qris' || remainingSeconds <= 0) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setRemainingSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [paymentStep, remainingSeconds]);
+
   const canContinue =
     selectedOption !== null &&
     (selectedOption !== 'tip' || Number(tipAmount) >= 2000);
@@ -82,6 +100,36 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
     : selectedOption === 'archive'
       ? 10000
       : Number(tipAmount);
+  const selectedProductName = selectedOption === 'special-bottle'
+    ? `Special Bottle (${SPECIAL_VARIANTS.find((variant) => variant.value === selectedVariant)?.label})`
+    : selectedOption === 'archive'
+      ? 'Peti Kenangan'
+      : 'Traktir Kopi Penjaga Sungai';
+  const whatsappMessage = `Halo Penjaga Sungai, saya sudah melakukan pembayaran sebesar Rp ${paymentAmount.toLocaleString('id-ID')} untuk ${selectedProductName} atas nama ${senderIdentity.trim()}. Mohon bantu verifikasi untuk perangkat ini.`;
+  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
+
+  const handleWhatsAppConfirmation = () => {
+    if (remainingSeconds > 0 || !senderIdentity.trim()) return;
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    setPaymentStep('submitted');
+  };
+
+  const handleActivateCode = () => {
+    const normalizedCode = activationCode.trim().toUpperCase();
+    if (normalizedCode === SPECIAL_ACTIVATION_CODE) {
+      grantSpecialBottleAccess(selectedVariant);
+      onSupportConfirmed({ product: 'special-bottle', variant: selectedVariant });
+      setActivationFeedback(`${SPECIAL_VARIANTS.find((variant) => variant.value === selectedVariant)?.label} berhasil dibuka di perangkat ini.`);
+      return;
+    }
+    if (normalizedCode === ARCHIVE_ACTIVATION_CODE) {
+      grantArchiveAccess();
+      onSupportConfirmed({ product: 'archive' });
+      setActivationFeedback('Peti Kenangan berhasil dibuka di perangkat ini.');
+      return;
+    }
+    setActivationFeedback('Kode belum cocok. Periksa kembali pesan dari Penjaga Sungai.');
+  };
 
   const handleConfirmPayment = () => {
     if (!selectedOption) return;
@@ -135,7 +183,25 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
           </p>
         </div>
 
-        {paymentStep === 'complete' ? (
+        {paymentStep === 'submitted' ? (
+          <div className="mt-7 rounded-xl border border-sky-200 bg-sky-50 p-6 text-center animate-fade-in">
+            <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-sky-100 text-sky-800">
+              <Check size={22} aria-hidden="true" />
+            </span>
+            <h3 className="mt-3 font-serif text-xl font-bold text-sky-950">Menunggu verifikasi</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-sky-900">
+              WhatsApp sudah dibuka dengan rincian pembayaranmu. Penjaga Sungai akan memeriksa transfer secara manual dan mengirim kode aktivasi setelah pembayaran terverifikasi.
+            </p>
+            <a
+              href={whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex rounded-lg border border-sky-300 bg-white px-4 py-2.5 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100"
+            >
+              Buka WhatsApp lagi
+            </a>
+          </div>
+        ) : paymentStep === 'complete' ? (
           <div className="mt-7 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center animate-fade-in">
             <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
               <Check size={22} aria-hidden="true" />
@@ -178,6 +244,23 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
                 </div>
                 <p className="mt-3 font-mono text-[10px] uppercase text-sky-800">QRIS Resmi Pembayaran</p>
                 <p className="mt-1 text-xs text-slate-600">Scan dengan m-Banking / E-Wallet apa saja</p>
+                <label htmlFor="payment-sender-identity" className="mt-4 w-full text-left text-xs font-medium text-slate-700">
+                  Nama Pengirim atau 3 Digit Terakhir No. Rekening
+                </label>
+                <input
+                  id="payment-sender-identity"
+                  type="text"
+                  autoComplete="name"
+                  value={senderIdentity}
+                  onChange={(event) => setSenderIdentity(event.target.value)}
+                  placeholder="Contoh: Rina atau 482"
+                  className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600"
+                />
+                <p aria-live="polite" className="mt-2 text-[11px] leading-relaxed text-slate-600">
+                  {remainingSeconds > 0
+                    ? `Mohon pindai QRIS dan selesaikan transfer. Konfirmasi tersedia dalam ${remainingSeconds} detik.`
+                    : 'Isi identitas transfer setelah pembayaran selesai untuk mengonfirmasi via WhatsApp.'}
+                </p>
               </div>
               <div className="flex flex-col justify-center rounded-xl border border-amber-200 bg-white/80 p-5">
                 <p className="font-mono text-[10px] uppercase text-amber-700">Rincian dukungan</p>
@@ -200,10 +283,11 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
             <div className="mt-6 flex justify-end border-t border-slate-200 pt-4">
               <button
                 type="button"
-                onClick={handleConfirmPayment}
+                onClick={handleWhatsAppConfirmation}
+                disabled={remainingSeconds > 0 || !senderIdentity.trim()}
                 className="rounded-lg bg-sky-800 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2"
               >
-                Konfirmasi Pembayaran QRIS
+                Konfirmasi via WhatsApp
               </button>
             </div>
           </div>
@@ -307,7 +391,10 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
               <button
                 type="button"
                 disabled={!canContinue}
-                onClick={() => setPaymentStep('qris')}
+                onClick={() => {
+                  setRemainingSeconds(5);
+                  setPaymentStep('qris');
+                }}
                 className="shrink-0 rounded-lg bg-sky-800 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-sky-900 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
               >
                 Lanjut Transaksi
@@ -315,6 +402,35 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
             </div>
           </>
         )}
+
+        <details className="mt-6 border-t border-slate-200 pt-4">
+          <summary className="cursor-pointer text-xs font-medium text-slate-600 transition-colors hover:text-sky-800">
+            Punya Kode Aktivasi dari Penjaga Sungai?
+          </summary>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="text"
+              value={activationCode}
+              onChange={(event) => setActivationCode(event.target.value)}
+              aria-label="Kode Aktivasi"
+              placeholder="Masukkan kode aktivasi"
+              className="min-w-0 flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 uppercase focus:outline-none focus:ring-2 focus:ring-sky-600"
+            />
+            <button
+              type="button"
+              disabled={!activationCode.trim()}
+              onClick={handleActivateCode}
+              className="rounded-lg border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-900 transition-colors hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Aktifkan kode
+            </button>
+          </div>
+          {activationFeedback && (
+            <p role="status" className="mt-2 text-xs leading-relaxed text-emerald-800">
+              {activationFeedback}
+            </p>
+          )}
+        </details>
       </section>
     </div>
   );

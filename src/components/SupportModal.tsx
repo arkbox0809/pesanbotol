@@ -240,7 +240,7 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
                 <p className="mt-3 font-mono text-[10px] uppercase text-sky-800">QRIS Resmi Pembayaran</p>
                 <p className="mt-1 text-xs text-slate-600">Scan dengan m-Banking / E-Wallet apa saja</p>
                 <label htmlFor="payment-sender-identity" className="mt-4 w-full text-left text-xs font-medium text-slate-700">
-                  Nama Pengirim atau 3 Digit Terakhir No. Rekening
+                  Nama Pengirim dan 3 Digit Terakhir No. Rekening
                 </label>
                 <input
                   id="payment-sender-identity"

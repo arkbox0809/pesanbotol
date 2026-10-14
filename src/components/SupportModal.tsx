@@ -64,6 +64,7 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
   const [paymentStep, setPaymentStep] = useState<PaymentStep>('options');
   const [remainingSeconds, setRemainingSeconds] = useState(5);
   const [senderIdentity, setSenderIdentity] = useState('');
+  const [senderError, setSenderError] = useState<string | null>(null);
   const [activationCode, setActivationCode] = useState('');
   const [activationFeedback, setActivationFeedback] = useState<string | null>(null);
 
@@ -107,12 +108,6 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
       : 'Traktir Kopi Penjaga Sungai';
   const whatsappMessage = `Halo Penjaga Sungai, saya sudah melakukan pembayaran sebesar Rp ${paymentAmount.toLocaleString('id-ID')} untuk ${selectedProductName} atas nama ${senderIdentity.trim()}. Mohon bantu verifikasi untuk perangkat ini.`;
   const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(whatsappMessage)}`;
-
-  const handleWhatsAppConfirmation = () => {
-    if (remainingSeconds > 0 || !senderIdentity.trim()) return;
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-    setPaymentStep('submitted');
-  };
 
   const handleActivateCode = () => {
     const normalizedCode = activationCode.trim().toUpperCase();
@@ -252,10 +247,18 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
                   type="text"
                   autoComplete="name"
                   value={senderIdentity}
-                  onChange={(event) => setSenderIdentity(event.target.value)}
-                  placeholder="Contoh: Rina atau 482"
+                  onChange={(event) => {
+                    setSenderIdentity(event.target.value);
+                    setSenderError(null);
+                  }}
+                  placeholder="Contoh: Fulan 123"
                   className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-600"
                 />
+                {senderError && (
+                  <p role="alert" className="mt-1 w-full text-left text-[11px] text-red-700">
+                    {senderError}
+                  </p>
+                )}
                 <p aria-live="polite" className="mt-2 text-[11px] leading-relaxed text-slate-600">
                   {remainingSeconds > 0
                     ? `Mohon pindai QRIS dan selesaikan transfer. Konfirmasi tersedia dalam ${remainingSeconds} detik.`
@@ -271,24 +274,37 @@ export default function SupportModal({ onClose, onSupportConfirmed, initialVaria
                       ? 'Peti Kenangan'
                       : 'Traktir Kopi Penjaga Sungai'}
                 </h3>
-                <p className="mt-4 text-xs text-slate-500">Total simulasi</p>
+                <p className="mt-4 text-xs text-slate-500">Total harga</p>
                 <p className="font-mono text-2xl font-semibold text-sky-900">
                   Rp {paymentAmount.toLocaleString('id-ID')}
                 </p>
                 <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-                  QR ini hanya placeholder. Tombol konfirmasi tidak memproses pembayaran nyata.
+                  Lakukan pembayaran sesuai nominal dengan scan QR di sebelah.
                 </p>
               </div>
             </div>
             <div className="mt-6 flex justify-end border-t border-slate-200 pt-4">
-              <button
-                type="button"
-                onClick={handleWhatsAppConfirmation}
-                disabled={remainingSeconds > 0 || !senderIdentity.trim()}
-                className="rounded-lg bg-sky-800 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-sky-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2"
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-disabled={remainingSeconds > 0}
+                onClick={(event) => {
+                  if (remainingSeconds > 0) {
+                    event.preventDefault();
+                    return;
+                  }
+                  if (!senderIdentity.trim()) {
+                    event.preventDefault();
+                    setSenderError('Masukkan nama pengirim dan 3 digit terakhir rekening terlebih dahulu.');
+                    return;
+                  }
+                  setPaymentStep('submitted');
+                }}
+                className={`rounded-lg px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 focus-visible:ring-offset-2 ${remainingSeconds > 0 ? 'pointer-events-none cursor-not-allowed bg-slate-400' : 'bg-sky-800 hover:bg-sky-900'}`}
               >
                 Konfirmasi via WhatsApp
-              </button>
+              </a>
             </div>
           </div>
         ) : (

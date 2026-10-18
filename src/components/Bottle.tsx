@@ -35,6 +35,7 @@ export interface BottleProps {
   }[];
   onOpen: (content: string, bottleId?: string) => void;
   isMention?: boolean;
+  mentionTargetId?: number | null;
 }
 
 export default function Bottle({
@@ -46,8 +47,10 @@ export default function Bottle({
   linkedReplies = [],
   onOpen,
   isMention = false,
+  mentionTargetId = null,
 }: BottleProps) {
   const [isPaused, setIsPaused] = useState(false);
+  const [mentionHover, setMentionHover] = useState(false);
 
   // Gunakan ID botol untuk menentukan nilai dasar
   const numericId = parseInt(id, 10) || 1;
@@ -285,8 +288,14 @@ export default function Bottle({
         animationPlayState: isPaused ? 'paused' : 'running',
         zIndex: isPaused ? 30 : 15,
       } as React.CSSProperties}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => {
+        setIsPaused(true);
+        if (isMention) setMentionHover(true);
+      }}
+      onMouseLeave={() => {
+        setIsPaused(false);
+        setMentionHover(false);
+      }}
       onClick={() => onOpen(content, id)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -322,7 +331,7 @@ export default function Bottle({
           ].map((message, index) => (
             <React.Fragment key={message.id}>
               <div
-                className="relative flex w-[60px] shrink-0 items-center justify-center transition-transform duration-200 hover:scale-110"
+                className="relative flex w-[60px] shrink-0 items-center justify-center transition-transform duration-200 hover:scale-110 group"
                 onClick={(event) => {
                   event.stopPropagation();
                   onOpen(message.content, String(message.id));
@@ -349,6 +358,23 @@ export default function Bottle({
                         <path d="M6 12h6" />
                       </svg>
                       <span className="absolute -top-1 -right-1 z-40 h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                    </div>
+                  )}
+                  {message.isMention && (
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[120px] group-hover:opacity-100 opacity-0 transition-opacity duration-200 pointer-events-none">
+                      <svg width="120" height="16" viewBox="0 0 120 16" fill="none" aria-hidden="true">
+                        <path
+                          d="M 0 8 Q 60 2 120 8"
+                          stroke="#f59e0b"
+                          strokeWidth="2"
+                          strokeDasharray="6 4"
+                          strokeLinecap="round"
+                          className="drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                        />
+                      </svg>
+                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-400 bg-slate-950/90 px-1.5 py-0.5 rounded border border-amber-500/30 whitespace-nowrap">
+                        Mention
+                      </span>
                     </div>
                   )}
                 </div>
@@ -431,6 +457,23 @@ export default function Bottle({
                     <path d="M6 12h6" />
                   </svg>
                   <span className="absolute -top-1 -right-1 z-40 h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                </div>
+              )}
+              {isMention && mentionHover && (
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[120px] pointer-events-none">
+                  <svg width="120" height="16" viewBox="0 0 120 16" fill="none" aria-hidden="true">
+                    <path
+                      d="M 0 8 Q 60 2 120 8"
+                      stroke="#f59e0b"
+                      strokeWidth="2"
+                      strokeDasharray="6 4"
+                      strokeLinecap="round"
+                      className="drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                    />
+                  </svg>
+                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-400 bg-slate-950/90 px-1.5 py-0.5 rounded border border-amber-500/30 whitespace-nowrap">
+                    Mention
+                  </span>
                 </div>
               )}
               <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-14 h-2.5 bg-amber-300/25 rounded-full blur-[2px] animate-pulse pointer-events-none" />

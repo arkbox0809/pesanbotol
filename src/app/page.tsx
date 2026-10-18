@@ -19,6 +19,7 @@ const PAGE_SIZE = 1000;
 const MAX_FEED_BOTTLES = 5000;
 const FEED_TIMEOUT_MS = 12000;
 const MAX_CHAIN_REPLIES = 5;
+const MAX_CHAIN_DEPTH = 5;
 
 function getFeedErrorMessage(error: unknown, timedOut: boolean): string {
   if (timedOut) {
@@ -134,40 +135,71 @@ export default function Home() {
     [bottles]
   );
 
-  // Analisis hubungan pesan balasan dan hitung kedalaman rantai
-  const bottleChains = useMemo(() => {
-    const chains = new Map<number, { rootId: number; depth: number; parentId: number | null }>();
+  // Analisis hubungan pesan balasan dan hitung kedalaman rantai (maksimal MAX_CHAIN_DEPTH)
+  const chainAnalysis = useMemo(() => {
+    const chains = new Map<number, {
+      rootId: number;
+      depth: number;
+      parentId: number | null;
+      isMention: boolean;
+      mentionTargetId: number | null;
+    }>();
+    const mentionTargets = new Map<number, number>();
 
     // Helper untuk mencari root dan depth secara rekursif
-    const getChainStats = (id: number): { rootId: number; depth: number; parentId: number | null } => {
+    const getChainStats = (id: number): {
+      rootId: number;
+      depth: number;
+      parentId: number | null;
+      isMention: boolean;
+      mentionTargetId: number | null;
+    } => {
       if (chains.has(id)) return chains.get(id)!;
 
       const bottle = bottleMap.get(id);
-      if (!bottle) return { rootId: id, depth: 1, parentId: null };
+      if (!bottle) return { rootId: id, depth: 1, parentId: null, isMention: false, mentionTargetId: null };
 
       const match = bottle.content.match(/^Balasan untuk\s+(\d+):/i);
       if (match) {
         const parentId = parseInt(match[1], 10);
         if (bottleMap.has(parentId)) {
           const parentStats = getChainStats(parentId);
+          // Jika induk sudah mencapai kedalaman maksimal, botol ini menjadi mention bukan rantai
+          if (parentStats.depth >= MAX_CHAIN_DEPTH) {
+            const stats = {
+              rootId: parentStats.rootId,
+              depth: 1,
+              parentId: null,
+              isMention: true,
+              mentionTargetId: parentId,
+            };
+            chains.set(id, stats);
+            mentionTargets.set(id, parentId);
+            return stats;
+          }
           const stats = {
             rootId: parentStats.rootId,
             depth: parentStats.depth + 1,
             parentId: parentId,
+            isMention: false,
+            mentionTargetId: null,
           };
           chains.set(id, stats);
           return stats;
         }
       }
 
-      const stats = { rootId: id, depth: 1, parentId: null };
+      const stats = { rootId: id, depth: 1, parentId: null, isMention: false, mentionTargetId: null };
       chains.set(id, stats);
       return stats;
     };
 
     bottles.forEach((b) => getChainStats(b.id));
-    return chains;
+    return { chains, mentionTargets };
   }, [bottles, bottleMap]);
+
+  const bottleChains = chainAnalysis.chains;
+  const mentionTargets = chainAnalysis.mentionTargets;
 
   // Peta anak per botol (balasan langsung ke botol tersebut), dibatasi MAX_CHAIN_REPLIES per induk
   const childrenMap = useMemo(() => {
@@ -464,9 +496,13 @@ export default function Home() {
               const rootGroup = replyGroups.find(({ root }) => root.id === stats?.parentId);
               const isOverflowReply = rootGroup?.replies.some((reply) => reply.id === bottle.id)
                 && !rootGroup.linkedReplies.some((reply) => reply.id === bottle.id);
+              const isDepthMention = Boolean(stats?.isMention);
               const parentId = isOverflowReply ? null : stats?.parentId ?? null;
               const parentBottle = parentId ? bottleMap.get(parentId) ?? null : null;
               const bottleChildren = childrenMap.get(bottle.id) ?? [];
+              const mentionTargetId = isDepthMention
+                ? stats?.mentionTargetId ?? null
+                : (isOverflowReply ? stats?.parentId ?? null : null);
 
               return (
                 <Bottle
@@ -492,7 +528,8 @@ export default function Home() {
                         children: childrenMap.get(c.id) ?? [],
                       }))
                     : undefined}
-                  isMention={isOverflowReply}
+                  isMention={isOverflowReply || isDepthMention}
+                  mentionTargetId={mentionTargetId}
                   onOpen={(content: string, bottleId?: string) => {
                     const bId = bottleId ? parseInt(bottleId, 10) : bottle.id;
                     handleOpenBottle(content, String(bId));

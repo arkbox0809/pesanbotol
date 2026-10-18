@@ -222,7 +222,7 @@ export default function MessageModal({
             <div className="mt-6 flex flex-col gap-3 pt-4 border-t border-slate-200">
               {isChainFull && (
                 <p className="text-[10px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-100 text-center italic">
-                  Tali pengikat sudah maksimal (5 balasan). Pesan ini tidak bisa dibalas lagi untuk menjaga arus tetap rapi.
+                  Tali pengikat sudah maksimal (5 balasan). Buat pesan baru dengan mention ke botol ini.
                 </p>
               )}
               <div className="flex items-center justify-between gap-3">
@@ -235,10 +235,22 @@ export default function MessageModal({
                 </button>
                 <button
                   onClick={onReply}
-                  disabled={isChainFull}
-                  className="px-5 py-2 bg-sky-700 hover:bg-sky-800 text-white text-sm rounded-lg shadow-md transition-all font-medium flex items-center gap-1.5 disabled:opacity-50 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                  disabled={false}
+                  className={`px-5 py-2 text-white text-sm rounded-lg shadow-md transition-all font-medium flex items-center gap-1.5 ${
+                    isChainFull
+                      ? 'bg-amber-600 hover:bg-amber-700'
+                      : 'bg-sky-700 hover:bg-sky-800'
+                  }`}
                 >
-                  <span>💬</span> Kirim Balasan
+                  {isChainFull ? (
+                    <>
+                      <span>📎</span> <span>💬</span> Buat Pesan Baru (Mention)
+                    </>
+                  ) : (
+                    <>
+                      <span>💬</span> Kirim Balasan
+                    </>
+                  )}
                 </button>
               </div>
             </div>

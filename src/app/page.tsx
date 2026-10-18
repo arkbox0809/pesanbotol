@@ -14,7 +14,7 @@ import { BookOpen, Heart, PenLine } from 'lucide-react';
 import { getDeviceToken, hasArchiveAccess as readArchiveAccess } from '@/lib/auth';
 import type { SupportConfirmation } from '@/lib/auth';
 
-const FETCH_LIMIT = 15;
+const MAX_VISIBLE_BOTTLES = 75;
 const PAGE_SIZE = 1000;
 const MAX_FEED_BOTTLES = 5000;
 const FEED_TIMEOUT_MS = 12000;
@@ -127,10 +127,7 @@ export default function Home() {
     () => bottles.filter((bottle) => !bottle.is_hidden),
     [bottles]
   );
-  const displayedBottles = useMemo(
-    () => visibleBottles.slice(0, FETCH_LIMIT),
-    [visibleBottles]
-  );
+  const displayedBottles = useMemo(() => visibleBottles, [visibleBottles]);
   const hasBottles = visibleBottles.length > 0;
   const bottleMap = useMemo(
     () => new Map(bottles.map((bottle) => [bottle.id, bottle])),
@@ -172,6 +169,33 @@ export default function Home() {
     return chains;
   }, [bottles, bottleMap]);
 
+  // Peta anak per botol (balasan langsung ke botol tersebut), dibatasi MAX_CHAIN_REPLIES per induk
+  const childrenMap = useMemo(() => {
+    const map = new Map<number, BottleRow[]>();
+    bottles.forEach((bottle) => {
+      const parentId = bottleChains.get(bottle.id)?.parentId;
+      if (parentId) {
+        const children = map.get(parentId) ?? [];
+        children.push(bottle);
+        map.set(parentId, children);
+      }
+    });
+    for (const [, children] of map) {
+      children.sort((a, b) => a.created_at.localeCompare(b.created_at));
+      children.splice(MAX_CHAIN_REPLIES);
+    }
+    return map;
+  }, [bottles, bottleChains]);
+
+  // Semua ID botol yang merupakan anak dari botol lain (jangan render terpisah)
+  const childIds = useMemo(() => {
+    const ids = new Set<number>();
+    childrenMap.forEach((children) => {
+      children.forEach((c) => ids.add(c.id));
+    });
+    return ids;
+  }, [childrenMap]);
+
   const replyCounts = useMemo(() => {
     const counts = new Map<number, number>();
     bottles.forEach((bottle) => {
@@ -182,7 +206,7 @@ export default function Home() {
   }, [bottles, bottleChains]);
 
   const replyGroups = useMemo(() => {
-    const displayedIds = new Set(displayedBottles.map((bottle) => bottle.id));
+    const displayedIds = new Set(visibleBottles.map((bottle) => bottle.id));
     const repliesByParent = new Map<number, BottleRow[]>();
 
     bottles.forEach((bottle) => {
@@ -202,15 +226,23 @@ export default function Home() {
         if (!displayedIds.has(root.id) && !replies.some((reply) => displayedIds.has(reply.id))) {
           return [];
         }
-        return [{ root, replies, linkedReplies: replies.slice(0, MAX_CHAIN_REPLIES) }];
+        return [{ root, replies, linkedReplies: replies.slice(0, MAX_CHAIN_REPLIES).map((reply) => ({
+          id: reply.id,
+          content: reply.content,
+          bottle_type: reply.bottle_type,
+          children: childrenMap.get(reply.id) ?? [],
+        })) }];
       });
-  }, [bottles, bottleChains, displayedBottles]);
+  }, [bottles, bottleChains, visibleBottles]);
 
   const groupedBottleIds = useMemo(() => {
     const ids = new Set<number>();
     replyGroups.forEach(({ root, linkedReplies }) => {
       ids.add(root.id);
-      linkedReplies.forEach((reply) => ids.add(reply.id));
+      linkedReplies.forEach((reply) => {
+        ids.add(reply.id);
+        reply.children.forEach((c) => ids.add(c.id));
+      });
     });
     return ids;
   }, [replyGroups]);
@@ -227,6 +259,34 @@ export default function Home() {
     });
     return parentIds;
   }, [displayedBottles, bottleChains, bottleMap]);
+
+  // Batasi total botol yang dirender di sungai menjadi MAX_VISIBLE_BOTTLES.
+  // Penghapusan dilakukan SETELAH seluruh logika chain (bottleChains, replyGroups,
+  // groupedBottleIds, chainedParentIds) selesai, sehingga pesan yang terikat
+  // dalam rantai balasan tidak terbuang sebelum relasi induk-balasan diproses.
+  const renderableBottles = useMemo(() => {
+    const rendered = new Set<number>();
+
+    replyGroups.forEach(({ root, linkedReplies }) => {
+      rendered.add(root.id);
+      linkedReplies.forEach((reply) => rendered.add(reply.id));
+    });
+
+    displayedBottles.forEach((bottle) => {
+      const stats = bottleChains.get(bottle.id);
+      if (!stats?.parentId && !rendered.has(bottle.id)) {
+        rendered.add(bottle.id);
+      }
+    });
+
+    // Urutkan berdasarkan created_at DESC (terbaru dulu) lalu potong ke MAX_VISIBLE_BOTTLES
+    return [...rendered]
+      .map((id) => bottleMap.get(id)!)
+      .filter((b): b is BottleRow => Boolean(b))
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .slice(0, MAX_VISIBLE_BOTTLES)
+      .map((b) => b.id);
+  }, [replyGroups, displayedBottles, bottleChains, bottleMap]);
 
   const handleReport = async (bottleId: number, reason: string) => {
     const result = await reportBottle(bottleId, reason);
@@ -371,24 +431,34 @@ export default function Home() {
 
       {/* 7. Area Jalur Aliran Botol (Sungai Utama) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {!isLoading && replyGroups.map(({ root, replies, linkedReplies }) => (
-          <Bottle
-            key={`reply-group-${root.id}`}
-            id={String(root.id)}
-            content={root.content}
-            bottleType={root.bottle_type}
-            linkedReplies={linkedReplies.map((reply) => ({
-              id: reply.id,
-              content: reply.content,
-              bottle_type: reply.bottle_type,
-            }))}
-            onOpen={(content, bottleId) => handleOpenBottle(content, bottleId ?? String(root.id))}
-          />
-        ))}
+        {!isLoading &&
+          replyGroups
+            .filter(
+              ({ root, linkedReplies }) =>
+                renderableBottles.includes(root.id) ||
+                linkedReplies.some((r) => renderableBottles.includes(r.id))
+            )
+            .map(({ root, replies, linkedReplies }) => (
+              <Bottle
+                key={`reply-group-${root.id}`}
+                id={String(root.id)}
+                content={root.content}
+                bottleType={root.bottle_type}
+        linkedReplies={linkedReplies.map((reply) => ({
+          id: reply.id,
+          content: reply.content,
+          bottle_type: reply.bottle_type,
+          children: reply.children,
+        }))}
+                onOpen={(content, bottleId) => handleOpenBottle(content, bottleId ?? String(root.id))}
+              />
+            ))}
         {!isLoading &&
           displayedBottles
+            .filter((bottle) => renderableBottles.includes(bottle.id))
             .filter((bottle) => !groupedBottleIds.has(bottle.id))
             .filter((bottle) => !chainedParentIds.has(bottle.id))
+            .filter((bottle) => !childIds.has(bottle.id))
             .map((bottle) => {
               const stats = bottleChains.get(bottle.id);
               const rootGroup = replyGroups.find(({ root }) => root.id === stats?.parentId);
@@ -396,6 +466,7 @@ export default function Home() {
                 && !rootGroup.linkedReplies.some((reply) => reply.id === bottle.id);
               const parentId = isOverflowReply ? null : stats?.parentId ?? null;
               const parentBottle = parentId ? bottleMap.get(parentId) ?? null : null;
+              const bottleChildren = childrenMap.get(bottle.id) ?? [];
 
               return (
                 <Bottle
@@ -413,6 +484,15 @@ export default function Home() {
                         }
                       : null
                   }
+                  linkedReplies={bottleChildren.length > 0
+                    ? bottleChildren.map((c) => ({
+                        id: c.id,
+                        content: c.content,
+                        bottle_type: c.bottle_type,
+                        children: childrenMap.get(c.id) ?? [],
+                      }))
+                    : undefined}
+                  isMention={isOverflowReply}
                   onOpen={(content: string, bottleId?: string) => {
                     const bId = bottleId ? parseInt(bottleId, 10) : bottle.id;
                     handleOpenBottle(content, String(bId));

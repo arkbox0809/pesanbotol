@@ -4,6 +4,8 @@ import type { BottleType } from '@/lib/supabase';
 
 type BottleVisualType = BottleType;
 
+const MAX_CHAIN_REPLIES = 5;
+
 const BOTTLE_TYPE_LABELS: Record<BottleVisualType, string> = {
   glass: 'Botol Kaca',
   scroll: 'Gulungan Surat',
@@ -328,7 +330,7 @@ export default function Bottle({
                 parentId: reply.id,
               })),
             ]),
-          ].map((message, index) => (
+          ].slice(0, MAX_CHAIN_REPLIES).map((message, index) => (
             <React.Fragment key={message.id}>
               <div
                 className="relative flex w-[60px] shrink-0 items-center justify-center transition-transform duration-200 hover:scale-110 group"

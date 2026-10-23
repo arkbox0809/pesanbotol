@@ -4,9 +4,10 @@ import { FormEvent, Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Anchor, Gem, Leaf, Sparkles } from 'lucide-react';
-import { createBottle } from '@/lib/supabase';
+import { supabase, createBottle } from '@/lib/supabase';
 import type { BottleType } from '@/lib/supabase';
 import { findInappropriateWords } from '@/lib/contentFilter';
+import { enqueueNotification } from '@/lib/notifications';
 import {
   getDeviceToken,
   getUnlockedSpecialBottles,
@@ -106,11 +107,47 @@ function WriteForm() {
           ? `Balasan untuk ${replyToId}: ${message.trim()}`
           : message.trim();
 
-      await createBottle({
+      const newBottle = await createBottle({
         content: finalContent,
         bottle_type: bottleType,
         owner_token: ownerToken,
       });
+
+      // Jika ini adalah balasan, tambahkan ke antrian notifikasi pemilik botol induk.
+      // targetBottleId diset ke ID botol balasan yang baru dibuat agar saat notifikasi
+      // diklik, botol balasan (bukan botol induk) yang mendapat visual highlight.
+      if (replyToId) {
+        // Ambil owner_token dari botol induk untuk menargetkan notifikasi
+        if (supabase) {
+          const { data: parentBottle } = await supabase
+            .from('bottles')
+            .select('owner_token')
+            .eq('id', parseInt(replyToId, 10))
+            .single();
+          if (parentBottle?.owner_token) {
+            await enqueueNotification({
+              deviceToken: parentBottle.owner_token,
+              targetBottleId: newBottle.id,
+              content: message.trim(),
+            });
+
+            // Jika jumlah balasan ke botol induk telah mencapai 5, kirim notifikasi mention
+            // ke pemilik botol induk agar mengetahui pesan mereka di-mention dalam arus sungai.
+            const { count: totalReplies } = await supabase
+              .from('bottles')
+              .select('*', { count: 'exact', head: true })
+              .ilike('content', `Balasan untuk ${replyToId}:%`);
+            if (totalReplies === 5) {
+              await enqueueNotification({
+                deviceToken: parentBottle.owner_token,
+                targetBottleId: newBottle.id,
+                content: 'Pesan kamu di-mention oleh seseorang dari arus sungai',
+              });
+            }
+          }
+        }
+      }
+
       // Sukses tersimpan → kembali ke halaman utama
       router.push('/');
     } catch (err) {

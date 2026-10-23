@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import RiverBackground from '@/components/RiverBackground';
-import Bottle from '@/components/Bottle';
+import Bottle from '@/components/bottle';
 import MessageModal from '@/components/MessageModal';
 import SupportModal from '@/components/SupportModal';
 import MemoryArchiveModal from '../components/MemoryArchiveModal';
@@ -12,11 +12,15 @@ import { supabase, reportBottle } from '@/lib/supabase';
 import type { BottleRow } from '@/lib/supabase';
 import { BookOpen, Heart, PenLine } from 'lucide-react';
 import { getDeviceToken, hasArchiveAccess as readArchiveAccess } from '@/lib/auth';
+import { getUnreadNotifications } from '@/lib/notifications';
 import type { SupportConfirmation } from '@/lib/auth';
+import NotificationBell from '@/components/NotificationBell';
 
 const MAX_VISIBLE_BOTTLES = 75;
 const PAGE_SIZE = 1000;
-const MAX_FEED_BOTTLES = 5000;
+// Hanya ambil 1000 botol pada development agar `npm run dev` lebih responsif.
+// Production tetap 5000 (tidak berubah).
+const MAX_FEED_BOTTLES = process.env.NODE_ENV === 'development' ? 1000 : 5000;
 const FEED_TIMEOUT_MS = 12000;
 const MAX_CHAIN_REPLIES = 5;
 const MAX_CHAIN_DEPTH = 5;
@@ -49,6 +53,10 @@ export default function Home() {
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [deviceToken, setDeviceToken] = useState<string | null>(null);
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [highlightBottleId, setHighlightBottleId] = useState<number | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [hasArchiveEntitlement, setHasArchiveEntitlement] = useState(false);
   const [archiveMessages, setArchiveMessages] = useState<BottleRow[]>([]);
   const [isArchiveLoading, setIsArchiveLoading] = useState(false);
@@ -124,6 +132,36 @@ export default function Home() {
     };
   }, [loadAttempt]);
 
+  // Muat notifikasi balasan belum dibaca untuk device token ini
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const token = getDeviceToken();
+      if (!token) return;
+      const list = await getUnreadNotifications(token);
+      if (mounted) {
+        setNotifications(list);
+        setNotificationCount(list.length);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Handle replyToId dari query param (dari klik notifikasi push)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const replyToId = params.get('replyToId');
+    if (replyToId) {
+      const id = parseInt(replyToId, 10);
+      if (!isNaN(id)) {
+        setHighlightBottleId(id);
+        // Scroll dan highlight akan ditangani oleh komponen Bottle
+      }
+    }
+  }, []);
+
   const visibleBottles = useMemo(
     () => bottles.filter((bottle) => !bottle.is_hidden),
     [bottles]
@@ -181,7 +219,7 @@ export default function Home() {
             rootId: parentStats.rootId,
             depth: parentStats.depth + 1,
             parentId: parentId,
-            isMention: false,
+            isMention: parentStats.isMention,
             mentionTargetId: null,
           };
           chains.set(id, stats);
@@ -200,6 +238,14 @@ export default function Home() {
 
   const bottleChains = chainAnalysis.chains;
   const mentionTargets = chainAnalysis.mentionTargets;
+
+  // ID induk dari botol yang sedang di-highlight (jika highlightBottleId adalah balasan),
+  // digunakan untuk menampilkan visual highlight pada item balasan dalam rantai.
+  const highlightParentId = useMemo(() => {
+    if (highlightBottleId === null) return null;
+    const stats = bottleChains.get(highlightBottleId);
+    return stats?.parentId ?? null;
+  }, [highlightBottleId, bottleChains]);
 
   // Peta anak per botol (balasan langsung ke botol tersebut), dibatasi MAX_CHAIN_REPLIES per induk
   const childrenMap = useMemo(() => {
@@ -237,6 +283,16 @@ export default function Home() {
     return counts;
   }, [bottles, bottleChains]);
 
+  // ID botol yang rantai balasannya sudah mencapai batas MAX_CHAIN_REPLIES (5),
+  // digunakan hanya untuk menampilkan label visual "Penuh" pada label botol/gulungan.
+  const fullChainBottleIds = useMemo(() => {
+    const ids = new Set<number>();
+    replyCounts.forEach((count, parentId) => {
+      if (count >= MAX_CHAIN_REPLIES) ids.add(parentId);
+    });
+    return ids;
+  }, [replyCounts]);
+
   const replyGroups = useMemo(() => {
     const displayedIds = new Set(visibleBottles.map((bottle) => bottle.id));
     const repliesByParent = new Map<number, BottleRow[]>();
@@ -249,6 +305,14 @@ export default function Home() {
       repliesByParent.set(parentId, replies);
     });
 
+    // Include mention bottles in displayedIds to ensure they are not filtered out
+    bottles.forEach((bottle) => {
+      const stats = bottleChains.get(bottle.id);
+      if (stats?.isMention) {
+        displayedIds.add(bottle.id);
+      }
+    });
+
     return bottles
       .filter((bottle) => !bottle.is_hidden && bottleChains.get(bottle.id)?.parentId === null)
       .flatMap((root) => {
@@ -258,12 +322,31 @@ export default function Home() {
         if (!displayedIds.has(root.id) && !replies.some((reply) => displayedIds.has(reply.id))) {
           return [];
         }
-        return [{ root, replies, linkedReplies: replies.slice(0, MAX_CHAIN_REPLIES).map((reply) => ({
+        const result = [{ root, replies, linkedReplies: replies.slice(0, MAX_CHAIN_REPLIES).map((reply) => ({
           id: reply.id,
           content: reply.content,
           bottle_type: reply.bottle_type,
           children: childrenMap.get(reply.id) ?? [],
+          isMention: Boolean(bottleChains.get(reply.id)?.isMention),
         })) }];
+        
+        // Include mention bottles (bottles with isMention=true)
+        const rootStats = bottleChains.get(root.id);
+        if (rootStats?.isMention && rootStats.mentionTargetId) {
+          result.push({
+            root: root,
+            replies: [],
+            linkedReplies: [{
+              id: root.id,
+              content: root.content,
+              bottle_type: root.bottle_type,
+              children: [],
+              isMention: Boolean(rootStats?.isMention),
+            }]
+          });
+        }
+        
+        return result;
       });
   }, [bottles, bottleChains, visibleBottles]);
 
@@ -386,7 +469,14 @@ export default function Home() {
       </div>
 
       {/* 3. Tombol Navigasi ke Halaman Tulis Pesan */}
-      <div className="absolute top-6 right-6 z-10 flex items-center gap-2">
+      <div className="absolute top-6 right-6 flex items-center gap-2">
+        {/* 3a. Tombol Notifikasi Balasan */}
+        <NotificationBell
+          onReplyClick={(bottleId: number) => {
+            setIsNotificationPanelOpen(false);
+            setHighlightBottleId(bottleId);
+          }}
+        />
         <button
           type="button"
           aria-label="Dukung Arus"
@@ -420,6 +510,11 @@ export default function Home() {
         <BookOpen size={19} aria-hidden="true" />
         <span className="hidden text-sm font-medium sm:inline">Peti Kenangan</span>
       </button>
+
+      {/* 3b. Status counter pesan hanyut di pojok kanan bawah */}
+      <div className="absolute bottom-6 right-6 z-30 flex items-center gap-1 rounded-full border border-slate-200/80 bg-[#fdfbf7]/90 p-2 px-3 text-xs font-mono text-slate-700 shadow-lg backdrop-blur-sm">
+        {visibleBottles.length}/{MAX_VISIBLE_BOTTLES} pesan hanyut
+      </div>
 
       {/* 4. Indikator loading saat data ditarik dari database */}
       {isLoading && (
@@ -476,11 +571,16 @@ export default function Home() {
                 id={String(root.id)}
                 content={root.content}
                 bottleType={root.bottle_type}
-        linkedReplies={linkedReplies.map((reply) => ({
+                isHighlighted={root.id === highlightBottleId}
+                highlightedReplyId={highlightParentId === root.id ? highlightBottleId : null}
+                isChainFull={fullChainBottleIds.has(root.id)}
+                isMention={Boolean(bottleChains.get(root.id)?.isMention)}
+                linkedReplies={linkedReplies.map((reply) => ({
           id: reply.id,
           content: reply.content,
           bottle_type: reply.bottle_type,
           children: reply.children,
+          isMention: Boolean(reply.isMention),
         }))}
                 onOpen={(content, bottleId) => handleOpenBottle(content, bottleId ?? String(root.id))}
               />
@@ -510,13 +610,16 @@ export default function Home() {
                   id={String(bottle.id)}
                   content={bottle.content}
                   bottleType={bottle.bottle_type}
+                  isHighlighted={bottle.id === highlightBottleId}
+                  isChainFull={fullChainBottleIds.has(bottle.id)}
                   replyToId={parentId}
                   parentBottle={
-                    parentBottle
+                    parentBottle && parentId !== null
                       ? {
                           id: parentBottle.id,
                           content: parentBottle.content,
                           bottle_type: parentBottle.bottle_type,
+                          isMention: Boolean(bottleChains.get(parentId)?.isMention),
                         }
                       : null
                   }

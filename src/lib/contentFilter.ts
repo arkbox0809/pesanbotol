@@ -39,7 +39,7 @@ function normalizeText(text: string): string {
     .replace(/[1i!]/g, 'i')
     .replace(/[3e]/g, 'e')
     .replace(/[$s]/g, 's')
-    .replace(/[^a-z0-9\s]/g, ' ');
+    .replace(/[^a-z0-9\\s]/g, ' ');
 }
 
 /**

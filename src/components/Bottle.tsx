@@ -24,20 +24,26 @@ export interface BottleProps {
     id: number;
     content: string;
     bottle_type: BottleVisualType;
+    isMention?: boolean;
   } | null;
   linkedReplies?: {
     id: number;
     content: string;
     bottle_type: BottleVisualType;
+    isMention?: boolean;
     children?: {
       id: number;
       content: string;
       bottle_type: BottleVisualType;
+      isMention?: boolean;
     }[];
   }[];
   onOpen: (content: string, bottleId?: string) => void;
   isMention?: boolean;
   mentionTargetId?: number | null;
+  isHighlighted?: boolean;
+  highlightedReplyId?: number | null;
+  isChainFull?: boolean;
 }
 
 export default function Bottle({
@@ -50,6 +56,9 @@ export default function Bottle({
   onOpen,
   isMention = false,
   mentionTargetId = null,
+  isHighlighted = false,
+  highlightedReplyId = null,
+  isChainFull = false,
 }: BottleProps) {
   const [isPaused, setIsPaused] = useState(false);
   const [mentionHover, setMentionHover] = useState(false);
@@ -58,6 +67,25 @@ export default function Bottle({
   const numericId = parseInt(id, 10) || 1;
   const isChained = Boolean((replyToId && parentBottle) || linkedReplies.length > 0);
   const baseId = isChained && parentBottle ? parentBottle.id : numericId;
+
+  // Total item yang terikat secara visual (induk + balasan + anak balasan), dibatasi MAX_CHAIN_REPLIES
+  const chainItems = useMemo(() => {
+    const items = [
+      { id: numericId, content, bottle_type: bottleType, isRoot: true, isMention: Boolean(isMention) },
+      ...linkedReplies.flatMap((reply) => [
+        { ...reply, isRoot: false, isMention: Boolean(reply.isMention) },
+        ...(reply.children ?? []).map((c) => ({
+          id: c.id,
+          content: c.content,
+          bottle_type: c.bottle_type,
+          isRoot: false,
+          isMention: Boolean(c.isMention),
+          parentId: reply.id,
+        })),
+      ]),
+    ];
+    return items.slice(0, MAX_CHAIN_REPLIES);
+  }, [numericId, content, bottleType, isMention, linkedReplies]);
 
   // Nilai acak stabil berbasis ID unik botol:
   // Ketinggian dan kecepatan terdistribusi acak & bervariasi luas di sungai
@@ -89,7 +117,7 @@ export default function Bottle({
   }, [baseId, isChained]);
 
   // Render SVG untuk botol tunggal (kaca atau gulungan)
-  const renderBottleIcon = (type: BottleVisualType, isChainMember = false) => {
+  const renderBottleIcon = (type: BottleVisualType, isChainMember = false, isHighlightedItem = false) => {
     if (type === 'anchor' && !isChainMember) {
       return (
         <div className="relative isolate h-10 w-[68px] drop-shadow-[0_0_10px_rgba(251,191,36,0.75)]">
@@ -277,12 +305,198 @@ export default function Bottle({
     );
   };
 
+  // Helper function to simplify the complex ternary logic
+  const renderChainContent = () => {
+    if (linkedReplies.length > 0) {
+      return (
+        <div className="relative flex w-max items-center">
+          {chainItems.map((message, index) => {
+            const isThisReplyHighlighted = highlightedReplyId !== null && message.id === highlightedReplyId;
+            return (
+              <React.Fragment key={message.id}>
+                <div
+                  className={`relative flex w-[60px] shrink-0 items-center justify-center transition-transform duration-200 hover:scale-110 group ${isThisReplyHighlighted ? 'ring-2 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] outline outline-amber-300/60' : ''}`}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpen(message.content, String(message.id));
+                  }}
+                  title={message.isRoot ? 'Klik untuk membuka pesan induk' : 'Klik untuk membuka balasan'}
+                >
+                  <div className="relative z-20">
+                    {renderBottleIcon(message.bottle_type, true, isThisReplyHighlighted)}
+                    {message.isRoot && isChainFull && (
+                      <span className="absolute top-0 left-0 z-30 flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-red-200/40 bg-red-900/70 px-1 py-0.5 text-[8px] font-mono font-bold text-red-100 backdrop-blur-sm shadow-lg drop-shadow-[0_0_8px_rgba(239,68,68,0.4)] whitespace-nowrap">
+                        <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+                        Penuh
+                      </span>
+                    )}
+                    {message.isMention && (
+                      <div className="absolute top-0 right-0 z-30 flex h-4 w-4 items-center justify-center">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 drop-shadow-[0_0_4px_rgba(0,0,0,0.4)]">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 6v6M12 18v-6" />
+                          <path d="M6 12h6" />
+                        </svg>
+                        <span className="absolute -top-1 -right-1 z-40 h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+                      </div>
+                    )}
+                    {message.isMention && (
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[120px] pointer-events-none">
+                        <svg width="120" height="16" viewBox="0 0 120 16" fill="none" aria-hidden="true">
+                          <path
+                            d="M 0 8 Q 60 2 120 8"
+                            stroke="#f59e0b"
+                            strokeWidth="2"
+                            strokeDasharray="6 4"
+                            strokeLinecap="round"
+                            className="drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                          />
+                        </svg>
+                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-400 bg-slate-950/90 px-1.5 py-0.5 rounded border border-amber-500/30 whitespace-nowrap">
+                          Mention
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="pointer-events-none absolute -bottom-1 h-2.5 w-11 rounded-full bg-amber-300/20 blur-[2px]" />
+                  <span className={`absolute -top-4 whitespace-nowrap rounded-full border px-1 py-0.5 text-[8px] font-mono font-bold ${
+                    message.isMention
+                      ? 'border-red-300/40 bg-red-900/80 text-red-200/90'
+                      : message.isRoot
+                        ? 'border-amber-300/30 bg-slate-900/80 text-amber-200/90'
+                        : 'border-sky-300/40 bg-sky-950/80 text-sky-200/90'
+                  }`}>
+                    {message.isMention ? 'Mention' : message.isRoot ? `Induk #${message.id}` : `Balasan #${message.id}`}
+                  </span>
+                </div>
+              </React.Fragment>
+            );
+          })}
+        </div>
+      );
+    } else if (isChained && parentBottle) {
+      return (
+        <div className="relative flex items-center">
+          {/* 1. Botol Induk (Pesan Awal) */}
+          <div
+            className={`relative transition-transform duration-200 hover:scale-110 ${highlightedReplyId !== null && parentBottle && parentBottle.id === highlightedReplyId ? 'ring-2 ring-amber-400 shadow-[0_0_20px_rgba(251,191,36,0.6)] outline outline-amber-300/60' : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(parentBottle.content, String(parentBottle.id));
+            }}
+            title="Klik untuk membuka pesan awal"
+          >
+            {renderBottleIcon(parentBottle.bottle_type, true)}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-14 h-2.5 bg-sky-300/20 rounded-full blur-[2px] animate-pulse pointer-events-none" />
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-200/90 bg-slate-900/80 px-1.5 py-0.5 rounded-full border border-amber-300/30 whitespace-nowrap">
+              {parentBottle.isMention ? 'Mention' : `Pesan #${parentBottle.id}`}
+            </span>
+          </div>
+
+          {/* 2. Visual Rantai Pengikat / Tali Emas Glowing */}
+          <div className="relative -mx-3 z-10 flex items-center justify-center">
+            <svg width="60" height="26" viewBox="0 0 60 26" fill="none" className="overflow-visible">
+              {/* Cahaya glow di belakang tali */}
+              <path
+                d="M 6 13 Q 30 22 54 13"
+                stroke="rgba(251, 191, 36, 0.4)"
+                strokeWidth="6"
+                strokeLinecap="round"
+                className="filter blur-[2px]"
+              />
+              {/* Tali tambang / rantai utama dengan riak dinamis */}
+              <path
+                d="M 6 13 Q 30 22 54 13"
+                stroke="#f59e0b"
+                strokeWidth="3"
+                strokeDasharray="4 3"
+                strokeLinecap="round"
+                className="animate-tether-flow"
+              />
+              {/* Simpul rantai / cincin di ujung kiri & kanan */}
+              <circle cx="6" cy="13" r="3.5" stroke="#fbbf24" strokeWidth="2" fill="#78350f" />
+              <circle cx="54" cy="13" r="3.5" stroke="#fbbf24" strokeWidth="2" fill="#78350f" />
+              {/* Ikon Ikatan Hati / Simpul Tengah */}
+              <g transform="translate(25, 12)">
+                <circle cx="5" cy="5" r="4.5" fill="#ef4444" stroke="#fef08a" strokeWidth="1" />
+                <path d="M 3.5 4 Q 5 2.5 6.5 4 Q 6.5 5.5 5 7 Q 3.5 5.5 3.5 4 Z" fill="#ffffff" />
+              </g>
+            </svg>
+          </div>
+
+          {/* 3. Botol Balasan (Pesan Ini) */}
+          <div
+            className="relative transition-transform duration-200 hover:scale-110"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen(content, id);
+            }}
+            title="Klik untuk membuka pesan balasan"
+          >
+            {renderBottleIcon(bottleType, true)}
+            {isChainFull && (
+              <span className="absolute top-0 left-0 z-30 flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-red-200/40 bg-red-900/70 px-1 py-0.5 text-[8px] font-mono font-bold text-red-100 backdrop-blur-sm shadow-lg drop-shadow-[0_0_8px_rgba(239,68,68,0.4)] whitespace-nowrap">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+                Penuh
+              </span>
+            )}
+            {isMention && (
+              <div className="absolute top-0 right-0 z-30 flex h-4 w-4 items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 drop-shadow-[0_0_4px_rgba(0,0,0,0.4)]">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6M12 18v-6" />
+                  <path d="M6 12h6" />
+                </svg>
+                <span className="absolute -top-1 -right-1 z-40 h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+              </div>
+            )}
+            {isMention && (
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[120px] pointer-events-none">
+                <svg width="120" height="16" viewBox="0 0 120 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M 0 8 Q 60 2 120 8"
+                    stroke="#f59e0b"
+                    strokeWidth="2"
+                    strokeDasharray="6 4"
+                    strokeLinecap="round"
+                    className="drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
+                  />
+                </svg>
+                <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-400 bg-slate-950/90 px-1.5 py-0.5 rounded border border-amber-500/30 whitespace-nowrap">
+                  Mention
+                </span>
+              </div>
+            )}
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-14 h-2.5 bg-amber-300/25 rounded-full blur-[2px] animate-pulse pointer-events-none" />
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-sky-200/90 bg-slate-950/80 px-1.5 py-0.5 rounded-full border border-sky-300/40 whitespace-nowrap">
+              {isMention ? '📎 Mention' : '💬 Balasan'}
+            </span>
+          </div>
+        </div>
+      );
+    } else {
+      return (
+        /* JIKA BOTOL BIASA / MANDIRI */
+        <div className="relative">
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-3 bg-sky-300/20 rounded-full blur-[2px] animate-pulse pointer-events-none" />
+          {isChainFull && (
+            <span className="absolute top-0 left-0 z-30 flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-red-200/40 bg-red-900/70 px-1 py-0.5 text-[8px] font-mono font-bold text-red-100 backdrop-blur-sm shadow-lg drop-shadow-[0_0_8px_rgba(239,68,68,0.4)] whitespace-nowrap">
+              <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
+              Penuh
+            </span>
+          )}
+          {renderBottleIcon(bottleType)}
+        </div>
+      );
+    }
+  };
+
   return (
     <div
       role="button"
       tabIndex={0}
-      aria-label={`Buka pesan dalam botol (${linkedReplies.length ? `Rantai dengan ${linkedReplies.length} balasan` : isChained ? 'Dua Botol Terikat Rantai' : BOTTLE_TYPE_LABELS[bottleType]})`}
-      className="bottle-float absolute left-0 cursor-pointer outline-none pointer-events-auto group select-none"
+      aria-label={`Buka pesan dalam botol (${chainItems.length > 1 ? `Rantai dengan ${chainItems.length} balasan` : isChained ? 'Dua Botol Terikat Rantai' : BOTTLE_TYPE_LABELS[bottleType]})`}
+      className={`bottle-float absolute left-0 cursor-pointer outline-none pointer-events-auto group select-none ${isHighlighted ? 'ring-2 ring-amber-500/90 shadow-[0_0_24px_rgba(251,191,36,0.55)] outline outline-amber-400/80' : ''}`}
       style={{
         '--bottle-base-duration': `${trajectory.duration}s`,
         top: `${trajectory.topPercent}%`,
@@ -314,183 +528,7 @@ export default function Bottle({
           animationPlayState: isPaused ? 'paused' : 'running',
         }}
       >
-      {/* JIKA TERIKAT DENGAN BOTOL INDUK (CHAIN / TETHERED BOTTLES) */}
-      {linkedReplies.length > 0 ? (
-        <div className="relative flex w-max items-center">
-          {[
-            { id: numericId, content, bottle_type: bottleType, isRoot: true, isMention: false },
-            ...linkedReplies.flatMap((reply) => [
-              { ...reply, isRoot: false, isMention: false },
-              ...(reply.children ?? []).map((c) => ({
-                id: c.id,
-                content: c.content,
-                bottle_type: c.bottle_type,
-                isRoot: false,
-                isMention: false,
-                parentId: reply.id,
-              })),
-            ]),
-          ].slice(0, MAX_CHAIN_REPLIES).map((message, index) => (
-            <React.Fragment key={message.id}>
-              <div
-                className="relative flex w-[60px] shrink-0 items-center justify-center transition-transform duration-200 hover:scale-110 group"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpen(message.content, String(message.id));
-                }}
-                title={message.isRoot ? 'Klik untuk membuka pesan induk' : 'Klik untuk membuka balasan'}
-              >
-                {index > 0 && (
-                  <div className="absolute left-[-18px] top-1/2 z-10 flex h-6 w-9 -translate-y-1/2 items-center justify-center">
-                    <svg width="36" height="24" viewBox="0 0 36 24" fill="none" aria-hidden="true">
-                      <path d="M 2 12 Q 18 20 34 12" stroke="rgba(251,191,36,0.4)" strokeWidth="5" strokeLinecap="round" />
-                      <path d="M 2 12 Q 18 20 34 12" stroke="#f59e0b" strokeWidth="2.5" strokeDasharray="3 2" strokeLinecap="round" className="animate-tether-flow" />
-                      <circle cx="2" cy="12" r="2.5" fill="#78350f" stroke="#fbbf24" strokeWidth="1.5" />
-                      <circle cx="34" cy="12" r="2.5" fill="#78350f" stroke="#fbbf24" strokeWidth="1.5" />
-                    </svg>
-                  </div>
-                )}
-                <div className="relative z-20">
-                  {renderBottleIcon(message.bottle_type, true)}
-                  {message.isMention && (
-                    <div className="absolute top-0 right-0 z-30 flex h-4 w-4 items-center justify-center">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 drop-shadow-[0_0_4px_rgba(0,0,0,0.4)]">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 6v6M12 18v-6" />
-                        <path d="M6 12h6" />
-                      </svg>
-                      <span className="absolute -top-1 -right-1 z-40 h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                    </div>
-                  )}
-                  {message.isMention && (
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[120px] group-hover:opacity-100 opacity-0 transition-opacity duration-200 pointer-events-none">
-                      <svg width="120" height="16" viewBox="0 0 120 16" fill="none" aria-hidden="true">
-                        <path
-                          d="M 0 8 Q 60 2 120 8"
-                          stroke="#f59e0b"
-                          strokeWidth="2"
-                          strokeDasharray="6 4"
-                          strokeLinecap="round"
-                          className="drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
-                        />
-                      </svg>
-                      <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-400 bg-slate-950/90 px-1.5 py-0.5 rounded border border-amber-500/30 whitespace-nowrap">
-                        Mention
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="pointer-events-none absolute -bottom-1 h-2.5 w-11 rounded-full bg-amber-300/20 blur-[2px]" />
-                <span className={`absolute -top-4 whitespace-nowrap rounded-full border px-1 py-0.5 text-[8px] font-mono font-bold ${
-                  message.isRoot
-                    ? 'border-amber-300/30 bg-slate-900/80 text-amber-200/90'
-                    : 'border-sky-300/40 bg-sky-950/80 text-sky-200/90'
-                }`}>
-                  {message.isRoot ? `Induk #${message.id}` : `Balasan #${message.id}`}
-                </span>
-              </div>
-            </React.Fragment>
-          ))}
-        </div>
-      ) : isChained && parentBottle ? (
-          <div className="relative flex items-center">
-            {/* 1. Botol Induk (Pesan Awal) */}
-            <div
-              className="relative transition-transform duration-200 hover:scale-110"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpen(parentBottle.content, String(parentBottle.id));
-              }}
-              title="Klik untuk membuka pesan awal"
-            >
-              {renderBottleIcon(parentBottle.bottle_type, true)}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-14 h-2.5 bg-sky-300/20 rounded-full blur-[2px] animate-pulse pointer-events-none" />
-              <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-200/90 bg-slate-900/80 px-1.5 py-0.5 rounded-full border border-amber-300/30 whitespace-nowrap">
-                Pesan #{parentBottle.id}
-              </span>
-            </div>
-
-            {/* 2. Visual Rantai Pengikat / Tali Emas Glowing */}
-            <div className="relative -mx-3 z-10 flex items-center justify-center">
-              <svg width="60" height="26" viewBox="0 0 60 26" fill="none" className="overflow-visible">
-                {/* Cahaya glow di belakang tali */}
-                <path
-                  d="M 6 13 Q 30 22 54 13"
-                  stroke="rgba(251, 191, 36, 0.4)"
-                  strokeWidth="6"
-                  strokeLinecap="round"
-                  className="filter blur-[2px]"
-                />
-                {/* Tali tambang / rantai utama dengan riak dinamis */}
-                <path
-                  d="M 6 13 Q 30 22 54 13"
-                  stroke="#f59e0b"
-                  strokeWidth="3"
-                  strokeDasharray="4 3"
-                  strokeLinecap="round"
-                  className="animate-tether-flow"
-                />
-                {/* Simpul rantai / cincin di ujung kiri & kanan */}
-                <circle cx="6" cy="13" r="3.5" stroke="#fbbf24" strokeWidth="2" fill="#78350f" />
-                <circle cx="54" cy="13" r="3.5" stroke="#fbbf24" strokeWidth="2" fill="#78350f" />
-                {/* Ikon Ikatan Hati / Simpul Tengah */}
-                <g transform="translate(25, 12)">
-                  <circle cx="5" cy="5" r="4.5" fill="#ef4444" stroke="#fef08a" strokeWidth="1" />
-                  <path d="M 3.5 4 Q 5 2.5 6.5 4 Q 6.5 5.5 5 7 Q 3.5 5.5 3.5 4 Z" fill="#ffffff" />
-                </g>
-              </svg>
-            </div>
-
-            {/* 3. Botol Balasan (Pesan Ini) */}
-            <div
-              className="relative transition-transform duration-200 hover:scale-110"
-              onClick={(e) => {
-                e.stopPropagation();
-                onOpen(content, id);
-              }}
-              title="Klik untuk membuka pesan balasan"
-            >
-              {renderBottleIcon(bottleType, true)}
-              {isMention && (
-                <div className="absolute top-0 right-0 z-30 flex h-4 w-4 items-center justify-center">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400 drop-shadow-[0_0_4px_rgba(0,0,0,0.4)]">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 6v6M12 18v-6" />
-                    <path d="M6 12h6" />
-                  </svg>
-                  <span className="absolute -top-1 -right-1 z-40 h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
-                </div>
-              )}
-              {isMention && mentionHover && (
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[120px] pointer-events-none">
-                  <svg width="120" height="16" viewBox="0 0 120 16" fill="none" aria-hidden="true">
-                    <path
-                      d="M 0 8 Q 60 2 120 8"
-                      stroke="#f59e0b"
-                      strokeWidth="2"
-                      strokeDasharray="6 4"
-                      strokeLinecap="round"
-                      className="drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]"
-                    />
-                  </svg>
-                  <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-amber-400 bg-slate-950/90 px-1.5 py-0.5 rounded border border-amber-500/30 whitespace-nowrap">
-                    Mention
-                  </span>
-                </div>
-              )}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-14 h-2.5 bg-amber-300/25 rounded-full blur-[2px] animate-pulse pointer-events-none" />
-              <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-mono font-bold text-sky-200/90 bg-sky-950/80 px-1.5 py-0.5 rounded-full border border-sky-300/40 whitespace-nowrap">
-                {isMention ? '📎 Mention' : '💬 Balasan'}
-              </span>
-            </div>
-          </div>
-        ) : (
-          /* JIKA BOTOL BIASA / MANDIRI */
-          <div className="relative">
-            <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-16 h-3 bg-sky-300/20 rounded-full blur-[2px] animate-pulse pointer-events-none" />
-            {renderBottleIcon(bottleType)}
-          </div>
-        )}
+        {renderChainContent()}
 
         {/* Tooltip / Petunjuk saat diarahkan kursor */}
         <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-200 pointer-events-none z-40">
@@ -499,9 +537,9 @@ export default function Bottle({
               <>
                 <Sparkles size={13} className="text-amber-300" aria-hidden="true" /> Anchor Bottle Abadi
               </>
-            ) : linkedReplies.length > 0 ? (
+            ) : chainItems.length > 1 ? (
               <>
-                <span className="text-amber-400">🔗</span> {linkedReplies.length} Balasan Terikat
+                <span className="text-amber-400">🔗</span> {chainItems.length} Balasan Terikat
               </>
             ) : isChained ? (
               <>

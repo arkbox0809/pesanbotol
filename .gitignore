@@ -1,1 +1,9 @@
 node_modules
+
+# Build artifacts (Next.js) — jangan di-commit.
+# Jalankan `npm run build` sebelum `npm start` agar manifest seperti
+# react-loadable-manifest.json selalu tersedia dan aktual.
+.next/
+.env.local
+recovery-codes.txt
+tsconfig.tsbuildinfo

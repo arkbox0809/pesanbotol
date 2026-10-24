@@ -193,7 +193,7 @@ export default function DeleteAccountPage() {
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-slate-200">
           <p className="text-xs text-slate-500 text-center">
-            PesanBotol &middot; Halaman hukum publik. Isi semua placeholder sebelum menerbitkan.
+            PesanBotol &middot; Halaman hukum publik. Copyright by Arus Nusantara 2026.
           </p>
         </div>
       </div>

@@ -225,8 +225,7 @@ export default function PrivacyPolicyPage() {
         {/* Footer */}
         <div className="mt-12 pt-8 border-t border-slate-200">
           <p className="text-xs text-slate-500 text-center">
-            PesanBotol &middot; Halaman hukum publik. Konten ini disediakan sebagaimana adanya dan harus
-            disesuaikan dengan praktik nyata sebelum diterbitkan.
+            PesanBotol &middot; Halaman hukum publik. Copyright by Arus Nusantara 2026.
           </p>
         </div>
       </div>

@@ -8,9 +8,10 @@ import Bottle from '@/components/bottle';
 import MessageModal from '@/components/MessageModal';
 import SupportModal from '@/components/SupportModal';
 import MemoryArchiveModal from '../components/MemoryArchiveModal';
+import LegalMenu from '@/components/LegalMenu';
 import { supabase, reportBottle } from '@/lib/supabase';
 import type { BottleRow } from '@/lib/supabase';
-import { BookOpen, Heart, PenLine } from 'lucide-react';
+import { BookOpen, Compass, Heart, PenLine } from 'lucide-react';
 import { getDeviceToken, hasArchiveAccess as readArchiveAccess } from '@/lib/auth';
 import { getUnreadNotifications } from '@/lib/notifications';
 import type { SupportConfirmation } from '@/lib/auth';
@@ -96,7 +97,9 @@ export default function Home() {
           const pageEnd = Math.min(offset + PAGE_SIZE, MAX_FEED_BOTTLES) - 1;
           const { data, error } = await supabase
             .from('bottles')
-            .select('id, content, bottle_type, created_at, is_hidden')
+            .select('id, content, bottle_type, created_at, is_hidden, expires_at')
+            .eq('is_hidden', false)
+            .or('expires_at.is.null,expires_at.gt.now()')
             .order('created_at', { ascending: false })
             .range(offset, pageEnd)
             .abortSignal(controller.signal);
@@ -498,6 +501,16 @@ export default function Home() {
           <PenLine size={18} strokeWidth={2.2} aria-hidden="true" />
           <span className="hidden lg:inline">Hanyutkan Pesan</span>
         </Link>
+        <Link
+          href="/explore"
+          aria-label="Jelajahi Laut Lain"
+          title="Jelajahi Laut Lain"
+          className="flex items-center justify-center gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-200 lg:px-4 lg:py-2.5"
+        >
+          <Compass size={18} aria-hidden="true" />
+          <span className="hidden lg:inline">Explore</span>
+        </Link>
+        <LegalMenu />
       </div>
 
       <button

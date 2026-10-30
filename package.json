@@ -18,6 +18,7 @@
     "@types/node": "^26.6.4",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "ext": "^1.7.0",
     "typescript": "^5.7.0"
   }
 }

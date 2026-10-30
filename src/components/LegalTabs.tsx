@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { ShieldCheck, FileText } from 'lucide-react';
+import { ShieldCheck, FileText, ShieldAlert } from 'lucide-react';
 
-type TabKey = 'privacy' | 'delete';
+type TabKey = 'privacy' | 'delete' | 'standar-keselamatan';
 
 const TABS: {
   key: TabKey;
@@ -21,6 +21,12 @@ const TABS: {
     href: '/delete-account',
     Icon: FileText,
   },
+  {
+    key: 'standar-keselamatan',
+    label: 'Standar Keselamatan Anak',
+    href: '/standar-keselamatan',
+    Icon: ShieldAlert,
+  },
 ];
 
 export function LegalTabs({ activeTab = 'privacy' }: { activeTab?: TabKey } = {}) {
@@ -33,7 +39,7 @@ export function LegalTabs({ activeTab = 'privacy' }: { activeTab?: TabKey } = {}
               Halaman Hukum PesanBotol
             </p>
           </div>
-          <div className="grid grid-cols-2 border rounded-xl border-slate-200">
+          <div className="flex lg:flex-row items-center justify-between gap-1 border rounded-xl border-slate-200 bg-white/50 px-1">
             {TABS.map((tab) => {
               const active = activeTab === tab.key;
               const Icon = tab.Icon;
@@ -41,16 +47,15 @@ export function LegalTabs({ activeTab = 'privacy' }: { activeTab?: TabKey } = {}
                 <Link
                   key={tab.key}
                   href={tab.href}
-                  className={`flex flex-col items-center justify-center gap-1.5 px-3 py-3 text-xs font-medium transition-colors ${
+                  className={`flex-1 flex items-center justify-center p-1.5 rounded-lg transition-colors ${
                     active
-                      ? 'bg-sky-50 text-sky-700 border-b-2 border-sky-600 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50/50'
+                      ? 'bg-sky-50 text-sky-600 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100/50'
                   }`}
                   aria-current={active ? 'page' : undefined}
                   title={tab.label}
                 >
                   <Icon size={17} aria-hidden="true" />
-                  <span>{tab.label}</span>
                 </Link>
               );
             })}

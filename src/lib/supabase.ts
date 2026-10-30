@@ -36,6 +36,8 @@ export interface NewBottle {
   content: string
   bottle_type: BottleType
   owner_token: string
+  laut?: string | null
+  expires_at?: string | null
 }
 
 export interface BottleRow extends Omit<NewBottle, 'owner_token'> {
@@ -45,6 +47,26 @@ export interface BottleRow extends Omit<NewBottle, 'owner_token'> {
   is_hidden: boolean
   report_count: number
   owner_token?: string | null
+  laut?: string | null
+  expires_at?: string | null
+}
+
+export const REGULAR_BOTTLE_TYPES: BottleType[] = ['glass', 'scroll']
+
+export function isRegularBottle(bottle_type: BottleType): boolean {
+  return REGULAR_BOTTLE_TYPES.includes(bottle_type)
+}
+
+export function getDefaultExpiresAt(bottle_type: BottleType): string | null {
+  if (!isRegularBottle(bottle_type)) return null
+  const now = new Date()
+  now.setDate(now.getDate() + 3)
+  return now.toISOString()
+}
+
+export interface OceanBranch {
+  laut: string
+  bottle_count: number
 }
 
 // --- Aksi simpan -------------------------------------------------------------
@@ -78,6 +100,8 @@ export async function createBottle(input: NewBottle): Promise<BottleRow> {
       content: input.content.trim(),
       bottle_type: input.bottle_type,
       owner_token: input.owner_token,
+      laut: input.laut ?? null,
+      expires_at: input.expires_at ?? getDefaultExpiresAt(input.bottle_type),
       is_opened: false,
       is_hidden: false,
       report_count: 0,
@@ -140,4 +164,88 @@ export async function reportBottle(
   }
 
   return { success: true, isHidden: shouldHide }
+}
+
+/**
+ * Mengambil daftar cabang laut yang tersedia beserta jumlah botol per laut.
+ * Hanya mengembalikan laut yang memiliki minimal 1 botol (tidak tersembunyi).
+ */
+const PREDEFINED_OCEANS: string[] = ['Laut-Senja', 'Lautan-Harapan', 'Telaga-Senyap']
+
+export async function getAvailableOceans(): Promise<OceanBranch[]> {
+  if (!supabase) {
+    return PREDEFINED_OCEANS.map((laut) => ({ laut, bottle_count: 0 }))
+  }
+
+  const { data, error } = await supabase
+    .from('bottles')
+    .select('laut')
+    .eq('is_hidden', false)
+    .not('laut', 'is', null)
+
+  if (error || !data) {
+    console.error('[PesanBotol] Gagal mengambil daftar laut:', error)
+    return PREDEFINED_OCEANS.map((laut) => ({ laut, bottle_count: 0 }))
+  }
+
+  const counts = new Map<string, number>()
+  data.forEach((row) => {
+    const laut = row.laut ?? 'Lautan-Harapan'
+    counts.set(laut, (counts.get(laut) ?? 0) + 1)
+  })
+
+  return PREDEFINED_OCEANS.map((laut) => ({
+    laut,
+    bottle_count: counts.get(laut) ?? 0,
+  }))
+}
+
+/**
+ * Mengambil botol dari cabang laut tertentu, difilter is_hidden = false
+ * dan excludes botol biasa yang sudah expired (lebih dari 3 hari).
+ * Parameter `ocean` boleh null/undefined untuk mengambil semua botol tanpa laut.
+ */
+export async function getBottlesByOcean(ocean: string | null | undefined): Promise<BottleRow[]> {
+  if (!supabase) {
+    return []
+  }
+
+  let query = supabase
+    .from('bottles')
+    .select('*')
+    .eq('is_hidden', false)
+    // Botol spesial (expires_at NULL) tidak kedaluwarsa; botol biasa sudah expired dihilangkan
+    .or('expires_at.is.null,expires_at.gt.now()')
+
+  if (ocean) {
+    query = query.eq('laut', ocean)
+  } else {
+    query = query.is('laut', null)
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[PesanBotol] Gagal mengambil botol per laut:', error)
+    return []
+  }
+
+  return (data as BottleRow[]) ?? []
+}
+
+/**
+ * Label tampilan ramah untuk setiap cabang laut.
+ */
+export const OCEAN_LABELS: Record<string, string> = {
+  'Laut-Senja': 'Laut Senja',
+  'Lautan-Harapan': 'Lautan Harapan',
+  'Telaga-Senyap': 'Telaga Senyap',
+}
+
+/**
+ * Mengembalikan label tampilan untuk sebuah laut, atau fallback jika tidak dikenal.
+ */
+export function getOceanLabel(laut: string | null | undefined): string {
+  if (!laut) return 'Belum Tercantum'
+  return OCEAN_LABELS[laut] ?? laut
 }

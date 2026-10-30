@@ -3,8 +3,8 @@
 import { FormEvent, Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Anchor, Gem, Leaf, Sparkles } from 'lucide-react';
-import { supabase, createBottle } from '@/lib/supabase';
+import { Anchor, Compass, Gem, Leaf, Sparkles } from 'lucide-react';
+import { supabase, createBottle, getOceanLabel, OCEAN_LABELS } from '@/lib/supabase';
 import type { BottleType } from '@/lib/supabase';
 import { findInappropriateWords } from '@/lib/contentFilter';
 import { enqueueNotification } from '@/lib/notifications';
@@ -40,6 +40,7 @@ function WriteForm() {
 
   const [message, setMessage] = useState('');
   const [bottleType, setBottleType] = useState<BottleType>('glass');
+  const [selectedOcean, setSelectedOcean] = useState<string>('Lautan-Harapan');
   const [unlockedSpecialBottles, setUnlockedSpecialBottles] = useState<SpecialBottleType[]>([]);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [requestedSupportVariant, setRequestedSupportVariant] = useState<SpecialBottleType | null>(null);
@@ -111,6 +112,7 @@ function WriteForm() {
         content: finalContent,
         bottle_type: bottleType,
         owner_token: ownerToken,
+        laut: selectedOcean,
       });
 
       // Jika ini adalah balasan, tambahkan ke antrian notifikasi pemilik botol induk.
@@ -171,6 +173,35 @@ function WriteForm() {
           💬 Balasan untuk: {replyContext}
         </p>
       )}
+
+      {/* Pemilihan cabang laut */}
+      <fieldset disabled={isSubmitting} className="flex flex-col gap-2">
+        <legend className="font-mono text-xs text-slate-500">
+          Pilih cabang laut
+        </legend>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(OCEAN_LABELS).map(([value, label]) => {
+            const isActive = selectedOcean === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setSelectedOcean(value)}
+                aria-pressed={isActive}
+                className={`flex flex-col items-center gap-1.5 rounded-xl border px-3 py-3 text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                  isActive
+                    ? 'border-sky-600 bg-sky-50 text-sky-900 shadow-sm'
+                    : 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-700'
+                }`}
+              >
+                <Compass size={16} aria-hidden="true" />
+                <span className="font-medium">{label}</span>
+                <span className="text-[10px] opacity-70">{value}</span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         {/* Pesan + penghitung karakter real-time */}

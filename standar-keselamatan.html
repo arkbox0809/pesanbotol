@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#061c30">
+  <meta name="description" content="Standar Keselamatan Anak PesanBotol: kebijakan pencegahan pelecehan dan eksploitasi seksual anak (CSAE), pelaporan, moderasi, dan kontak keselamatan.">
+  <meta name="color-scheme" content="light">
+  <title>Standar Keselamatan Anak | PesanBotol</title>
+  <style>
+    :root{--navy:#071e32;--navy2:#0a344f;--teal:#097f88;--aqua:#56c4bc;--ink:#172d3d;--muted:#647b8b;--paper:#f5f9f9;--line:#dbe8e9;--white:#fff;--gold:#eacb86;--shadow:0 18px 55px rgba(10,48,66,.085)}
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:90px}
+    body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.72 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+    a{color:var(--teal);text-underline-offset:3px}a:hover{color:#056069}a:focus-visible,button:focus-visible{outline:3px solid #edba4c;outline-offset:4px;border-radius:4px}
+    .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+    .header{position:relative;z-index:10;background:#061c30;color:white;border-bottom:1px solid rgba(255,255,255,.12)}
+    .wrap{width:min(1152px,calc(100% - 48px));margin-inline:auto}
+    .header-inner{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{display:inline-flex;align-items:center;gap:12px;color:white;text-decoration:none;font-weight:780;font-size:20px;letter-spacing:-.05em}.brand span em{color:#7fe1d9;font-style:normal}
+    .brand-mark{width:39px;height:39px;background:linear-gradient(150deg,#277f92,#0c3956);border:1px solid rgba(158,237,229,.4);border-radius:12px;display:grid;place-items:center;box-shadow:inset 0 1px rgba(255,255,255,.22)}
+    nav{display:flex;gap:27px;align-items:center}nav a{font-size:13px;font-weight:650;color:#d6e8eb;text-decoration:none}nav a:hover{color:#fff}
+    .hero{position:relative;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 86% 56%,#16657a 0%,transparent 38%),linear-gradient(115deg,#061c30 5%,#0b3752 52%,#0b5268 100%);color:white;min-height:453px}
+    .hero:before{content:"";position:absolute;inset:0;opacity:.32;background-image:radial-gradient(#e9ffff 1px,transparent 1px);background-size:43px 43px;mask-image:linear-gradient(90deg,transparent 42%,black 100%);pointer-events:none}
+    .hero-inner{position:relative;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;min-height:420px;padding-block:56px 76px;gap:34px}
+    .eyebrow{display:inline-flex;align-items:center;gap:9px;color:#b5ece8;text-transform:uppercase;letter-spacing:.17em;font-weight:750;font-size:11px}
+    .eyebrow:before{content:"";width:21px;height:1px;background:#8cdbd8}
+    h1{font-size:clamp(40px,5.1vw,67px);line-height:1.1;letter-spacing:-.055em;max-width:680px;margin:20px 0 22px;font-weight:780}
+    h1 strong{color:#91e4d8;font-weight:inherit}
+    .hero p{color:#cce1e6;line-height:1.8;max-width:540px;font-size:16px;margin:0 0 28px}
+    .hero-actions{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+    .button{background:#d9f6ef;color:#063447;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 18px;border-radius:10px;font-weight:750;font-size:13px;min-height:46px;box-shadow:0 6px 18px rgba(0,0,0,.1)}.button:hover{background:white;color:#063447}.text-link{color:#ecffff;text-decoration:none;font-weight:650;font-size:13px}.text-link:hover{color:white}
+    .hero-illustration{width:100%;max-width:485px;justify-self:center;filter:drop-shadow(0 30px 35px rgba(0,12,25,.2))}
+    .wave{position:absolute;bottom:-1px;width:100%;height:62px;pointer-events:none}.wave svg{display:block;width:100%;height:100%}
+    .intro{position:relative;margin-top:-15px;z-index:1;padding:34px 0 12px}
+    .info-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .info-item{background:white;border:1px solid #e3eded;border-radius:14px;padding:19px 20px;display:flex;gap:13px;align-items:center;box-shadow:0 6px 20px rgba(13,56,72,.035)}
+    .info-icon{flex:none;width:39px;height:39px;display:grid;place-items:center;border-radius:12px;background:#e5f6f1;color:#087a79}
+    .info-item b{font-size:13px;display:block;line-height:1.4}.info-item span{font-size:12px;color:var(--muted)}
+    .page{display:grid;grid-template-columns:250px minmax(0,1fr);gap:45px;padding:55px 0 100px;align-items:start}
+    .toc{position:sticky;top:23px;border:1px solid var(--line);background:#fff;border-radius:16px;padding:24px 17px;box-shadow:0 8px 24px rgba(17,56,66,.035)}.toc-title{font-size:11px;color:#79919c;text-transform:uppercase;letter-spacing:.16em;font-weight:780;margin:0 0 12px 11px}.toc a{display:block;text-decoration:none;color:#426373;padding:9px 11px;border-radius:8px;font-size:12px;font-weight:600;line-height:1.5}.toc a:hover{background:#edf6f5;color:#075e68}.toc .toc-divider{height:1px;background:var(--line);margin:14px 10px}.toc-note{color:#8297a0;font-size:11px;margin:0 11px;line-height:1.6}
+    .content{min-width:0}.document-header{margin-bottom:36px}.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid #b9dfd9;background:#e5f5f1;color:#096e68;font-weight:740;font-size:11px;letter-spacing:.03em;border-radius:99px;padding:5px 11px}.document-header h2{font-size:clamp(27px,3vw,37px);line-height:1.23;letter-spacing:-.035em;margin:14px 0 12px;color:#102f42}.document-header p{color:#58717f;max-width:740px;margin:0}.document-date{display:flex;align-items:center;gap:8px;color:#7f929b;font-size:12px;margin-top:16px}
+    .statement{border-radius:16px;background:linear-gradient(115deg,#e9f6f2,#f7fafa);border:1px solid #cbe4df;padding:25px 29px;margin:0 0 28px;border-left:4px solid #1e988c}.statement b{display:block;color:#086d68;font-size:14px;margin-bottom:6px}.statement p{margin:0;color:#335863;font-size:14px;line-height:1.8}
+    .section{background:white;border:1px solid var(--line);border-radius:17px;padding:32px 35px;margin:0 0 17px;box-shadow:0 9px 22px rgba(17,56,66,.026)}
+    .section-kicker{font-size:11px;letter-spacing:.16em;color:#0b8a83;font-weight:800;text-transform:uppercase}
+    .section h3{font-size:22px;line-height:1.3;letter-spacing:-.025em;color:#13364a;margin:8px 0 13px}
+    .section p{font-size:14px;line-height:1.85;color:#516b7a;margin:0 0 13px}.section p:last-child{margin-bottom:0}
+    .rules{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:12px}.rules li{position:relative;padding-left:29px;font-size:14px;color:#425f6e;line-height:1.65}.rules li:before{content:"×";position:absolute;left:0;top:1px;display:grid;place-items:center;width:18px;height:18px;border-radius:6px;background:#fff0ec;color:#b75346;font-size:15px;font-weight:800;line-height:1}
+    .steps{list-style:none;counter-reset:step;padding:0;margin:18px 0 0;display:grid;gap:16px}.steps li{counter-increment:step;padding-left:43px;position:relative;font-size:14px;line-height:1.76;color:#456674}.steps li:before{content:counter(step);position:absolute;left:0;top:0;width:28px;height:28px;background:#e8f5f3;color:#087b7a;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:12px}
+    .contact{background:linear-gradient(140deg,#0a344d,#0a5360);border-radius:18px;padding:33px 35px;color:white;overflow:hidden;position:relative}.contact:after{content:"";position:absolute;border:1px solid rgba(255,255,255,.11);width:280px;height:280px;border-radius:50%;right:-94px;top:-134px;pointer-events:none}.contact .section-kicker{color:#a0e9e0}.contact h3{font-size:25px;letter-spacing:-.03em;margin:9px 0 10px}.contact p{max-width:600px;color:#c5e1e5;font-size:14px;line-height:1.8;margin:0 0 22px}.email-button{display:inline-flex;align-items:center;gap:9px;background:white;color:#09536a;text-decoration:none;border-radius:9px;padding:12px 16px;font-size:13px;font-weight:780;overflow-wrap:anywhere}.email-button:hover{color:#073d50;background:#dff8f2}.contact small{display:block;margin-top:16px;color:#bdd4dd;max-width:520px;font-size:11px;line-height:1.6}
+    .footer{background:#071e32;color:#b5c9d2;padding:26px 0}.footer-inner{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap;font-size:12px}.footer b{color:#e7f7f6}.footer a{color:#d4f4ef;text-decoration:none}
+    @media(max-width:900px){.hero-inner{grid-template-columns:1.2fr .8fr}.hero-illustration{max-width:360px}.page{grid-template-columns:200px minmax(0,1fr);gap:23px}.section{padding:26px}.info-item{padding:14px}.info-item span{display:none}}
+    @media(max-width:700px){.wrap{width:min(100% - 34px,540px)}.header-inner{min-height:67px}.brand{font-size:19px}nav{gap:14px}nav a{font-size:11px}nav a:nth-child(1){display:none}.hero-inner{grid-template-columns:1fr;min-height:unset;padding:54px 0 72px;gap:4px}.hero-illustration{position:absolute;width:225px;right:-60px;bottom:15px;opacity:.35;z-index:-1}.hero h1{max-width:410px;font-size:43px}.hero p{max-width:410px;font-size:14px}.info-strip{grid-template-columns:1fr;gap:9px}.info-item{padding:13px 16px}.info-item span{display:block}.page{display:block;padding:35px 0 65px}.toc{display:none}.document-header h2{font-size:29px}.section{padding:25px 22px}.contact{padding:28px 23px}.wave{height:43px}}
+    @media(max-width:380px){nav a:nth-child(2){display:none}.hero h1{font-size:38px}.hero-illustration{right:-85px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    @media print{.header nav,.hero,.toc,.info-strip{display:none!important}.header{background:white;color:#111}.brand{color:#111}.page{display:block;padding:5mm 0}.wrap{width:100%}.section,.contact{break-inside:avoid;box-shadow:none}.contact{background:white;color:#102f42;border:1px solid #ccc}.contact p,.contact small{color:#455}.contact a{color:#09536a}.footer{background:white;color:#444}}
+  </style>
+</head>
+<body>
+  <a class="sr-only" href="#isi">Lewati ke isi utama</a>
+  <header class="header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#atas" aria-label="PesanBotol, kembali ke atas">
+        <span class="brand-mark" aria-hidden="true"><svg width="25" height="25" viewBox="0 0 32 32" fill="none"><path d="M11 5.7 17 3l2 4.2-1.8 1.2 7.4 13c1.6 2.8.7 5.5-1.9 7.1-2.8 1.6-6.6.6-8.1-2.2L7.2 13.4l-2.1.5-2.2-4L8.9 7" transform="rotate(-17 16 16)" stroke="#bff8ec" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 18.7c3.7-2.9 6.1-1.8 8.3-.9" stroke="#83d9d6" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+        <span>Pesan<em>Botol</em></span>
+      </a>
+      <nav aria-label="Navigasi utama"><a href="#standar">Kebijakan</a><a href="#pelaporan">Pelaporan</a><a href="#kontak">Hubungi Kami</a></nav>
+    </div>
+  </header>
+  <section class="hero" id="atas" aria-labelledby="hero-title">
+    <div class="wrap hero-inner">
+      <div>
+        <div class="eyebrow">Kebijakan Resmi PesanBotol</div>
+        <h1 id="hero-title">Setiap cerita berhak berada di <strong>ruang yang aman.</strong></h1>
+        <p>Standar Keselamatan Anak PesanBotol. Komitmen kami untuk mencegah, menangani, dan melarang segala bentuk pelecehan serta eksploitasi seksual terhadap anak.</p>
+        <div class="hero-actions"><a class="button" href="#standar">Baca standar keselamatan <span aria-hidden="true">↗</span></a><a class="text-link" href="#kontak">Laporkan masalah <span aria-hidden="true">→</span></a></div>
+      </div>
+      <svg class="hero-illustration" viewBox="0 0 500 410" role="img" aria-label="Ilustrasi botol berisi pesan di atas ombak laut">
+        <defs><linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#37c7bf"/><stop offset="1" stop-color="#055068"/></linearGradient><linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e4fffa" stop-opacity=".75"/><stop offset=".5" stop-color="#6ed3df" stop-opacity=".16"/><stop offset="1" stop-color="#ecfffa" stop-opacity=".55"/></linearGradient><linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7e9c8"/><stop offset="1" stop-color="#d9c496"/></linearGradient><radialGradient id="halo"><stop stop-color="#8ee9dc" stop-opacity=".35"/><stop offset="1" stop-color="#8ee9dc" stop-opacity="0"/></radialGradient></defs>
+        <circle cx="275" cy="183" r="180" fill="url(#halo)"/><circle cx="391" cy="65" r="3" fill="#98dedb" opacity=".7"/><circle cx="90" cy="110" r="2" fill="#98dedb" opacity=".6"/><circle cx="417" cy="225" r="2.5" fill="#d4ffed" opacity=".8"/>
+        <g transform="rotate(25 250 196)"><rect x="212" y="62" width="77" height="30" rx="8" fill="#b99057" stroke="#dfbb84" stroke-width="3"/><rect x="220" y="80" width="61" height="71" rx="17" fill="url(#glass)" stroke="#d5fff5" stroke-width="5"/><path d="M218 131 C218 150 179 163 166 197 C150 238 167 287 211 303 C241 317 270 318 303 303 C346 280 354 230 338 194 C327 169 285 151 285 132" fill="url(#glass)" stroke="#d6fff5" stroke-width="6" stroke-linecap="round"/><path d="M185 235q68 21 145-4l-5 27q-64 29-135-2z" fill="#70dad5" opacity=".16"/><g transform="rotate(-10 252 232)"><rect x="202" y="203" width="99" height="54" rx="9" fill="url(#paper)" stroke="#fff0cf" stroke-width="3"/><path d="M218 213h66M218 225h46M218 237h60" stroke="#a88a5d" stroke-width="3" opacity=".47" stroke-linecap="round"/><path d="M249 203v54" stroke="#a77b49" stroke-width="7" opacity=".7"/><circle cx="249" cy="228" r="5" fill="#6e9c9a"/></g><path d="M204 175q-30 50-18 88M234 101v37" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".55"/><path d="M322 190q13 34 6 49" stroke="#cffffb" stroke-width="5" opacity=".6" stroke-linecap="round"/></g>
+        <path d="M30 322C95 280 156 341 221 316S345 278 470 316V410H30z" fill="#166d83" opacity=".72"/><path d="M0 349C85 311 127 354 212 342S372 306 500 350V410H0z" fill="url(#water)" opacity=".83"/><path d="M0 367C80 339 138 388 240 363S411 340 500 368V410H0z" fill="#073b57" opacity=".74"/><path d="M65 329q32-11 59-2M350 337q25-10 62-1M170 374q25-6 46-1" stroke="#9af6e8" stroke-opacity=".65" stroke-width="3" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="wave" aria-hidden="true"><svg viewBox="0 0 1440 70" preserveAspectRatio="none"><path fill="#f5f9f9" d="M0 45C170 82 317 8 489 37c167 29 305 35 469 5C1120 12 1270 35 1440 40v30H0z"/></svg></div>
+  </section>
+  <div class="wrap intro" aria-label="Pilar keselamatan"><div class="info-strip">
+    <div class="info-item"><span class="info-icon" aria-hidden="true">✦</span><div><b>Tanpa toleransi untuk CSAE</b><span>Larangan tegas terhadap eksploitasi anak</span></div></div>
+    <div class="info-item"><span class="info-icon" aria-hidden="true">◈</span><div><b>Pelaporan yang dapat diakses</b><span>Laporkan konten atau perilaku berbahaya</span></div></div>
+    <div class="info-item"><span class="info-icon" aria-hidden="true">✓</span><div><b>Tindakan perlindungan</b><span>Peninjauan dan penanganan pelanggaran</span></div></div>
+  </div></div>
+  <main id="isi" class="wrap page">
+    <aside class="toc" aria-label="Daftar isi"><p class="toc-title">Daftar isi</p><a href="#standar">01 · Komitmen kami</a><a href="#larangan">02 · Perilaku yang dilarang</a><a href="#pelaporan">03 · Cara melapor</a><a href="#penanganan">04 · Penanganan CSAM</a><a href="#hukum">05 · Kepatuhan hukum</a><a href="#kontak">06 · Kontak keselamatan</a><div class="toc-divider"></div><p class="toc-note">Berlaku untuk seluruh ruang cerita dan interaksi dalam PesanBotol.</p></aside>
+    <div class="content">
+      <div class="document-header"><span class="pill">Kebijakan publik · Child Safety Standards</span><h2>Standar Keselamatan Anak</h2><p>Kebijakan resmi PesanBotol mengenai pencegahan pelecehan dan eksploitasi seksual terhadap anak (Child Sexual Abuse and Exploitation/CSAE).</p><div class="document-date">Diperbarui: 29 Oktober 2026 <span aria-hidden="true">·</span> Bahasa Indonesia</div></div>
+      <div class="statement"><b>Komitmen tanpa toleransi</b><p>PesanBotol melarang setiap bentuk pelecehan dan eksploitasi seksual terhadap anak, termasuk materi pelecehan seksual anak (CSAM). Aturan ini berlaku tanpa pengecualian pada laut publik, laut privat, cerita, dan balasan.</p></div>
+      <section class="section" id="standar"><div class="section-kicker">01 / Prinsip</div><h3>Ruang cerita yang bertanggung jawab</h3><p>PesanBotol adalah tempat berbagi cerita melalui pesan dalam botol. Privasi dan anonimitas dalam aplikasi tidak boleh digunakan untuk merugikan, mengeksploitasi, mengintimidasi, atau membahayakan anak.</p><p>Kebijakan ini berlaku untuk seluruh pengguna, konten, dan interaksi pada layanan PesanBotol, tanpa memandang apakah percakapan terjadi di laut publik maupun privat.</p></section>
+      <section class="section" id="larangan"><div class="section-kicker">02 / Larangan</div><h3>Konten dan perilaku yang dilarang</h3><p>PesanBotol secara tegas melarang tindakan atau konten berikut:</p><ul class="rules"><li>Membuat, meminta, menyimpan, menyebarkan, atau mengarahkan pengguna kepada materi pelecehan seksual anak (CSAM).</li><li>Membujuk atau memanipulasi anak untuk tujuan seksual, termasuk <i>grooming</i>.</li><li>Melakukan pemerasan seksual terhadap anak, termasuk <i>sextortion</i>.</li><li>Mempromosikan, memfasilitasi, atau melakukan perdagangan dan eksploitasi seksual anak.</li><li>Menggunakan cerita, balasan, kode laut, atau ruang privat untuk mengatur, menyembunyikan, maupun mendukung perilaku CSAE.</li></ul></section>
+      <section class="section" id="pelaporan"><div class="section-kicker">03 / Pelaporan</div><h3>Bagaimana melaporkan masalah?</h3><p>Jika menemukan konten atau perilaku yang diduga membahayakan anak, segera laporkan melalui fitur pelaporan di aplikasi atau gunakan kontak keselamatan yang tercantum pada halaman ini.</p><ol class="steps"><li>Gunakan opsi <b>Laporkan</b> pada cerita atau balasan yang bersangkutan jika tersedia.</li><li>Jelaskan kekhawatiran secara ringkas. Cantumkan identifikasi cerita atau konteks kejadian bila memungkinkan.</li><li>Jangan mengunduh, menyebarkan ulang, atau mengirim salinan materi yang diduga CSAM. Jika ada bahaya langsung, hubungi layanan darurat atau otoritas setempat.</li></ol></section>
+      <section class="section" id="penanganan"><div class="section-kicker">04 / Moderasi</div><h3>Penanganan laporan dan CSAM</h3><p>Laporan yang berkaitan dengan keselamatan anak diprioritaskan untuk ditinjau. Jika ditemukan pelanggaran, pengelola dapat membatasi akses, menghapus atau menonaktifkan konten, dan membatasi atau menonaktifkan akun yang terlibat.</p><p>Untuk dugaan atau temuan CSAM, penanganan dilakukan sesuai hukum yang berlaku, termasuk pelaporan kepada otoritas yang relevan apabila diwajibkan. Kami tidak mengizinkan penyebaran ulang materi yang dilaporkan melalui sistem pelaporan publik.</p></section>
+      <section class="section" id="hukum"><div class="section-kicker">05 / Kepatuhan</div><h3>Perlindungan anak dan kepatuhan hukum</h3><p>PesanBotol berkomitmen mematuhi peraturan perlindungan anak yang berlaku dan bekerja sama dengan otoritas yang berwenang sesuai kewajiban hukum. Kebijakan ini menjadi dasar penegakan aturan komunitas terhadap konten atau perilaku yang mengeksploitasi anak.</p><p>Kami dapat memperbarui standar ini untuk menyesuaikan ketentuan hukum, kebijakan platform, dan kebutuhan keselamatan pengguna.</p></section>
+      <section class="contact" id="kontak"><div class="section-kicker">06 / Hubungi kami</div><h3>Kontak Keselamatan Anak</h3><p>Untuk laporan atau pertanyaan terkait dugaan CSAE pada PesanBotol, hubungi alamat berikut. Pesan akan digunakan untuk meninjau masalah keselamatan sesuai kebijakan layanan.</p><a class="email-button" href="mailto:pesanbotol@proton.me?subject=Laporan%20Keselamatan%20Anak%20-%20PesanBotol"><span aria-hidden="true">✉</span> pesanbotol@proton.me <span aria-hidden="true">↗</span></a><small>Mohon jangan melampirkan materi CSAM. Berikan informasi yang cukup untuk membantu penanganan laporan. Jika anak sedang dalam bahaya, segera hubungi otoritas setempat.</small></section>
+    </div>
+  </main>
+  <footer class="footer"><div class="wrap footer-inner"><span><b>PesanBotol</b> · Setiap cerita punya tempat yang aman.</span><span>© 2026 PesanBotol · <a href="#atas">Kembali ke atas ↑</a></span></div></footer>
+</body>
+</html>

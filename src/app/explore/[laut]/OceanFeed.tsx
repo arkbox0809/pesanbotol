@@ -362,7 +362,7 @@ export function OceanFeed({ ocean }: { ocean: string }) {
     );
   }
 
-  const hasBottles = visibleBottles.length > 0;
+  const hasBottles = renderableBottles.length > 0;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden select-none {oceanBg}">
@@ -376,9 +376,59 @@ export function OceanFeed({ ocean }: { ocean: string }) {
       {/* Efek arus laut halus (bukan bintik-bintik putih) */}
       <div className="absolute inset-0 opacity-10 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)] animate-wave pointer-events-none" />
 
-      {/* Laut Senja: efek kilau senja sore */}
+      {/* Laut Senja: efek kilau senja sore dan capung kartun terbang di tepi laut */}
       {ocean === 'Laut-Senja' && (
-        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,#fbbf24_15%,transparent_60%)] animate-[pulse_4s_ease-in-out_infinite]" />
+        <>
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,#fbbf24_15%,transparent_60%)] animate-[pulse_4s_ease-in-out_infinite]" />
+
+           {/* Komponen capung kartun: badan + dua sayap + antenna */}
+           {[
+             { id: 1, top: 'bottom-12', left: 'left-12', delay: '0s', dur: '4s', anim: 'hoverFirefly', type: 'hover' },
+             { id: 2, top: 'bottom-8', left: 'right-12', delay: '1s', dur: '5s', anim: 'hoverFirefly', type: 'hover' },
+             { id: 3, top: 'bottom-16', left: 'right-8', delay: '2s', dur: '3s', anim: 'hoverFirefly', type: 'hover' },
+             { id: 4, top: 'top-1/5', left: 'right-[110vw]', delay: '0s', dur: '5s', anim: 'flyFirefly', type: 'fly' },
+             { id: 5, top: 'top-1/3', left: 'right-[110vw]', delay: '2.5s', dur: '7s', anim: 'flyFirefly', type: 'fly' },
+             { id: 6, top: 'top-2/5', left: 'right-[110vw]', delay: '5s', dur: '6s', anim: 'flyFirefly', type: 'fly' },
+             { id: 7, top: 'top-3/5', left: 'right-[110vw]', delay: '7.5s', dur: '8s', anim: 'flyFirefly', type: 'fly' },
+           ].map((f) => (
+            <div
+              key={f.id}
+              className={`absolute ${f.top} ${f.left} z-50 pointer-events-none animate-[${f.anim}_${f.dur}_ease-in-out_infinite]`}
+              style={{ animationDelay: f.delay }}
+            >
+              {/* Badan capung */}
+              <div className="flex items-center justify-center">
+                <div className="w-1.5 h-3 rounded-full bg-orange-700" />
+              </div>
+              {/* Sayap kiri */}
+              <div className="absolute -left-1.5 -top-0.5 w-4 h-1.5 rounded-full bg-orange-400/60 animate-[wingFlap_2s_ease-in-out_infinite]" />
+              {/* Sayap kanan */}
+              <div className="absolute -right-1.5 -top-0.5 w-4 h-1.5 rounded-full bg-orange-400/60 animate-[wingFlap_2s_ease-in-out_infinite]" />
+              {/* Antenna kiri */}
+              <div className="absolute -top-1.5 -left-0.5 w-1 h-1 rounded-full bg-orange-600" />
+              {/* Antenna kanan */}
+              <div className="absolute -top-1.5 -right-0.5 w-1 h-1 rounded-full bg-orange-600" />
+            </div>
+          ))}
+
+          <style>
+            {`
+               @keyframes flyFirefly {
+                 0% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; will-change: transform; }
+                 10% { opacity: 0.9; }
+                 25% { transform: translateX(calc(50vw - 10%)) translateY(-15px) rotate(5deg); }
+                 50% { transform: translateX(calc(75vw - 10%)) translateY(15px) rotate(-3deg); }
+                 75% { transform: translateX(calc(90vw - 10%)) translateY(-10px) rotate(3deg); }
+                 90% { opacity: 0.9; }
+                 100% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; }
+               }
+               @keyframes wingFlap {
+                 0%, 100% { transform: scaleX(1); opacity: 0.6; }
+                 50% { transform: scaleX(0.3); opacity: 0.4; }
+               }
+            `}
+          </style>
+        </>
       )}
 
       {/* Telaga Senyap: daun-daun yang melayang mengikuti arus */}
@@ -466,7 +516,7 @@ export function OceanFeed({ ocean }: { ocean: string }) {
 
       {/* Status counter di pojok kanan bawah */}
       <div className="absolute bottom-6 right-6 z-30 flex items-center gap-1 rounded-full border border-slate-200/80 bg-[#fdfbf7]/90 p-2 px-3 text-xs font-mono text-slate-700 shadow-lg backdrop-blur-sm">
-        {visibleBottles.length}/{MAX_VISIBLE_BOTTLES} botol di {oceanLabel}
+        {renderableBottles.length}/{MAX_VISIBLE_BOTTLES} botol di {oceanLabel}
       </div>
 
       {/* Kondisi kosong */}

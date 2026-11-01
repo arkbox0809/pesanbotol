@@ -97,8 +97,11 @@ export default function Home() {
           const pageEnd = Math.min(offset + PAGE_SIZE, MAX_FEED_BOTTLES) - 1;
           const { data, error } = await supabase
             .from('bottles')
-            .select('id, content, bottle_type, created_at, is_hidden, expires_at')
+            .select('id, content, bottle_type, created_at, is_hidden, expires_at, laut')
             .eq('is_hidden', false)
+            // Hanya tampilkan botol Lautan Harapan (default) atau tanpa laut
+            .or('laut.is.null,laut.eq.Lautan-Harapan')
+            // Hanya tampilkan botol yang belum expired
             .or('expires_at.is.null,expires_at.gt.now()')
             .order('created_at', { ascending: false })
             .range(offset, pageEnd)

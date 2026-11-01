@@ -182,6 +182,8 @@ export async function getAvailableOceans(): Promise<OceanBranch[]> {
     .select('laut')
     .eq('is_hidden', false)
     .not('laut', 'is', null)
+    // Hanya hitung botol yang belum expired (spesial = NULL, biasa = belum melewati 3 hari)
+    .or('expires_at.is.null,expires_at.gt.now()')
 
   if (error || !data) {
     console.error('[PesanBotol] Gagal mengambil daftar laut:', error)

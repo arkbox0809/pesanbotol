@@ -18,9 +18,12 @@ import {
 } from '@/lib/supabase';
 import { getDeviceToken } from '@/lib/auth';
 import MessageModal from '@/components/MessageModal';
+import DailyStreakPill from '@/components/DailyStreakPill';
 import MemoryArchiveModal from '@/components/MemoryArchiveModal';
 import NotificationBell from '@/components/NotificationBell';
 import SupportModal from '@/components/SupportModal';
+import LegalMenu from '@/components/LegalMenu';
+import MobileMenu from '@/components/MobileMenu';
 
 const MAX_VISIBLE_BOTTLES = 75;
 const MAX_CHAIN_REPLIES = 5;
@@ -79,6 +82,7 @@ export function OceanFeed({ ocean }: { ocean: string }) {
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [deviceToken, setDeviceTokenState] = useState<string | null>(null);
   const [archiveMessages, setArchiveMessages] = useState<BottleRow[]>([]);
   const [isArchiveLoading, setIsArchiveLoading] = useState(false);
@@ -461,10 +465,12 @@ export function OceanFeed({ ocean }: { ocean: string }) {
         <p className="text-xs font-mono tracking-wide text-white/70">
           Cabang laut PesanBotol
         </p>
+        <DailyStreakPill />
       </div>
 
       {/* Tombol navigasi di pojok kanan */}
-      <div className="absolute top-6 right-6 flex items-center gap-2">
+      {/* Desktop: tombol navigasi horizontal (sembunyi di mobile) */}
+      <div className="hidden lg:flex absolute top-6 right-6 z-10 flex items-center gap-2">
         <NotificationBell
           onReplyClick={() => {
             // Tidak ada highlight di halaman explore
@@ -500,7 +506,80 @@ export function OceanFeed({ ocean }: { ocean: string }) {
           <Compass size={18} aria-hidden="true" />
           <span className="hidden lg:inline">Kembali</span>
         </Link>
+        <LegalMenu />
       </div>
+
+      {/* Mobile: hamburger menu (sembunyi di desktop).
+           Overlay dan panel menu di-portal ke luar stacking context navbar
+           (lihat MobileMenu), sehingga pembungkus ini tidak perlu
+           mengisolasi stacking context dengan z-index tinggi. */}
+      <div className="absolute top-6 right-6">
+        <MobileMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <NotificationBell
+            onReplyClick={() => {
+              // Tidak ada highlight di halaman explore
+            }}
+          />
+          <button
+            type="button"
+            aria-label="Dukung Arus"
+            aria-haspopup="dialog"
+            aria-expanded={isSupportOpen}
+            title="Dukung Arus"
+            onClick={() => setIsSupportOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-full border border-sky-200/50 bg-sky-100/90 p-2.5 text-sm font-medium text-sky-950 shadow-lg backdrop-blur-sm transition-colors hover:bg-sky-50 px-4 py-2.5"
+          >
+            <Heart size={18} aria-hidden="true" />
+            <span className="hidden sm:inline">Dukung Arus</span>
+          </button>
+          <Link
+            href="/write"
+            aria-label="Hanyutkan Pesan"
+            title="Hanyutkan Pesan"
+            className="flex items-center justify-center gap-2 rounded-full border border-amber-300/50 bg-amber-500/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-amber-500 px-5 py-2.5"
+          >
+            <PenLine size={18} strokeWidth={2.2} aria-hidden="true" />
+            <span className="hidden sm:inline">Hanyutkan Pesan</span>
+          </Link>
+          <Link
+            href="/explore"
+            aria-label="Kembali ke Daftar Laut"
+            title="Kembali ke Daftar Laut"
+            className="flex items-center justify-center gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-200 px-4 py-2.5"
+          >
+            <Compass size={18} aria-hidden="true" />
+            <span className="hidden sm:inline">Kembali</span>
+          </Link>
+          <Link
+            href="/standar-keselamatan"
+            className="flex items-center justify-between gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm hover:bg-slate-200 px-4 py-2.5"
+          >
+            <span className="font-mono text-[10px]">Standar Keselamatan</span>
+          </Link>
+          <Link
+            href="/privacy-policy"
+            className="flex items-center justify-between gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm hover:bg-slate-200 px-4 py-2.5"
+          >
+            <span className="font-mono text-[10px]">Kebijakan Privasi</span>
+          </Link>
+          <Link
+            href="/delete-account"
+            className="flex items-center justify-between gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm hover:bg-slate-200 px-4 py-2.5"
+          >
+            <span className="font-mono text-[10px]">Hapus Akun</span>
+          </Link>
+        </MobileMenu>
+      </div>
+
+      {/* Overlay pemblokir pointer saat menu mobile terbuka:
+           mencegah botol di baliknya dapat di-hover/klik (isPaused & z-index naik ke 30) */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-[9998] pointer-events-none"
+          aria-hidden="true"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
 
       {/* Tombol Peti Kenangan di bawah tengah */}
       <button
@@ -514,9 +593,13 @@ export function OceanFeed({ ocean }: { ocean: string }) {
         <span className="hidden text-sm font-medium sm:inline">Peti Kenangan</span>
       </button>
 
-      {/* Status counter di pojok kanan bawah */}
+      {/* Status counter di pojok kanan bawah.
+           Di mobile hanya angka (X/75) agar tidak tumpang tindih
+           tombol Peti Kenangan di tengah bawah. Keterangan lengkap
+           tetap ditampilkan di layar lebih lebar (sm ke atas). */}
       <div className="absolute bottom-6 right-6 z-30 flex items-center gap-1 rounded-full border border-slate-200/80 bg-[#fdfbf7]/90 p-2 px-3 text-xs font-mono text-slate-700 shadow-lg backdrop-blur-sm">
-        {renderableBottles.length}/{MAX_VISIBLE_BOTTLES} botol di {oceanLabel}
+        <span className="font-bold">{renderableBottles.length}/{MAX_VISIBLE_BOTTLES}</span>
+        <span className="hidden sm:inline"> botol di {oceanLabel}</span>
       </div>
 
       {/* Kondisi kosong */}

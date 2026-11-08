@@ -8,6 +8,7 @@ import { supabase, createBottle, getOceanLabel, OCEAN_LABELS } from '@/lib/supab
 import type { BottleType } from '@/lib/supabase';
 import { findInappropriateWords } from '@/lib/contentFilter';
 import { enqueueNotification } from '@/lib/notifications';
+import DailyStreakPill from '@/components/DailyStreakPill';
 import {
   getDeviceToken,
   getUnlockedSpecialBottles,
@@ -379,6 +380,10 @@ export default function WritePage() {
       {/* Latar belakang sungai yang tenang */}
       <div className="pointer-events-none absolute inset-0 animate-river-slow bg-[radial-gradient(#38bdf8_1px,transparent_1px)] opacity-20 [background-size:16px_16px]" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-sky-950/50 to-transparent" />
+
+      <div className="absolute top-6 right-6 z-10">
+        <DailyStreakPill />
+      </div>
 
       <div className="relative z-10 flex min-h-screen flex-col items-center justify-center p-4">
         <div className="mb-6 text-center">

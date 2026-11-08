@@ -9,9 +9,11 @@ import MessageModal from '@/components/MessageModal';
 import SupportModal from '@/components/SupportModal';
 import MemoryArchiveModal from '../components/MemoryArchiveModal';
 import LegalMenu from '@/components/LegalMenu';
+import MobileMenu from '@/components/MobileMenu';
 import { supabase, reportBottle } from '@/lib/supabase';
 import type { BottleRow } from '@/lib/supabase';
 import { BookOpen, Compass, Heart, PenLine } from 'lucide-react';
+import DailyStreakPill from '@/components/DailyStreakPill';
 import { getDeviceToken, hasArchiveAccess as readArchiveAccess } from '@/lib/auth';
 import { getUnreadNotifications } from '@/lib/notifications';
 import type { SupportConfirmation } from '@/lib/auth';
@@ -56,6 +58,7 @@ export default function Home() {
   const [deviceToken, setDeviceToken] = useState<string | null>(null);
   const [notificationCount, setNotificationCount] = useState(0);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [highlightBottleId, setHighlightBottleId] = useState<number | null>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [hasArchiveEntitlement, setHasArchiveEntitlement] = useState(false);
@@ -472,10 +475,14 @@ export default function Home() {
         <p className="max-w-[calc(100vw-10rem)] text-xs leading-relaxed text-sky-200/70 font-mono tracking-wide sm:max-w-none">
           Tempat membuang rahasia dan harapan ke arus waktu.
         </p>
+        <div className="mt-2">
+          <DailyStreakPill />
+        </div>
       </div>
 
       {/* 3. Tombol Navigasi ke Halaman Tulis Pesan */}
-      <div className="absolute top-6 right-6 flex items-center gap-2">
+      {/* Desktop: tombol navigasi horizontal (sembunyi di mobile) */}
+      <div className="hidden lg:flex absolute top-6 right-6 z-10 flex items-center gap-2">
         {/* 3a. Tombol Notifikasi Balasan */}
         <NotificationBell
           onReplyClick={(bottleId: number) => {
@@ -516,6 +523,79 @@ export default function Home() {
         <LegalMenu />
       </div>
 
+      {/* Mobile: hamburger menu (sembunyi di desktop).
+           Overlay dan panel menu di-portal ke luar stacking context navbar
+           (lihat MobileMenu), sehingga pembungkus ini tidak perlu
+           mengisolasi stacking context dengan z-index tinggi. */}
+      <div className="absolute top-6 right-6">
+        <MobileMenu isOpen={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <NotificationBell
+            onReplyClick={(bottleId: number) => {
+              setIsNotificationPanelOpen(false);
+              setHighlightBottleId(bottleId);
+            }}
+          />
+          <button
+            type="button"
+            aria-label="Dukung Arus"
+            aria-haspopup="dialog"
+            aria-expanded={isSupportOpen}
+            title="Dukung Arus"
+            onClick={() => setIsSupportOpen(true)}
+            className="flex items-center justify-center gap-2 rounded-full border border-sky-200/50 bg-sky-100/90 p-2.5 text-sm font-medium text-sky-950 shadow-lg backdrop-blur-sm transition-colors hover:bg-sky-50 px-4 py-2.5"
+          >
+            <Heart size={18} aria-hidden="true" />
+            <span className="hidden sm:inline">Dukung Arus</span>
+          </button>
+          <Link
+            href="/write"
+            aria-label="Hanyutkan Pesan"
+            title="Hanyutkan Pesan"
+            className="flex items-center justify-center gap-2 rounded-full border border-amber-300/50 bg-amber-500/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-amber-500 px-5 py-2.5"
+          >
+            <PenLine size={18} strokeWidth={2.2} aria-hidden="true" />
+            <span className="hidden sm:inline">Hanyutkan Pesan</span>
+          </Link>
+          <Link
+            href="/explore"
+            aria-label="Jelajahi Laut Lain"
+            title="Jelajahi Laut Lain"
+            className="flex items-center justify-center gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-200 px-4 py-2.5"
+          >
+            <Compass size={18} aria-hidden="true" />
+            <span className="hidden sm:inline">Explore</span>
+          </Link>
+          <Link
+            href="/standar-keselamatan"
+            className="flex items-center justify-between gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm hover:bg-slate-200 px-4 py-2.5"
+          >
+            <span className="font-mono text-[10px]">Standar Keselamatan</span>
+          </Link>
+          <Link
+            href="/privacy-policy"
+            className="flex items-center justify-between gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm hover:bg-slate-200 px-4 py-2.5"
+          >
+            <span className="font-mono text-[10px]">Kebijakan Privasi</span>
+          </Link>
+          <Link
+            href="/delete-account"
+            className="flex items-center justify-between gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm hover:bg-slate-200 px-4 py-2.5"
+          >
+            <span className="font-mono text-[10px]">Hapus Akun</span>
+          </Link>
+        </MobileMenu>
+      </div>
+
+      {/* Overlay pemblokir pointer saat menu mobile terbuka:
+           mencegah botol di baliknya dapat di-hover/klik (isPaused & z-index naik ke 30) */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-[9998] pointer-events-none"
+          aria-hidden="true"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
       <button
         type="button"
         aria-label="Buka Peti Kenangan"
@@ -527,9 +607,13 @@ export default function Home() {
         <span className="hidden text-sm font-medium sm:inline">Peti Kenangan</span>
       </button>
 
-      {/* 3b. Status counter pesan hanyut di pojok kanan bawah */}
+      {/* 3b. Status counter pesan hanyut di pojok kanan bawah.
+           Di mobile hanya angka (X/75) agar tidak tumpang tindih
+           tombol Peti Kenangan di tengah bawah. Keterangan lengkap
+           tetap ditampilkan di layar lebih lebar (sm ke atas). */}
       <div className="absolute bottom-6 right-6 z-30 flex items-center gap-1 rounded-full border border-slate-200/80 bg-[#fdfbf7]/90 p-2 px-3 text-xs font-mono text-slate-700 shadow-lg backdrop-blur-sm">
-        {visibleBottles.length}/{MAX_VISIBLE_BOTTLES} pesan hanyut
+        <span className="font-bold">{visibleBottles.length}/{MAX_VISIBLE_BOTTLES}</span>
+        <span className="hidden sm:inline"> pesan hanyut</span>
       </div>
 
       {/* 4. Indikator loading saat data ditarik dari database */}

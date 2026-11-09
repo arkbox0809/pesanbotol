@@ -57,7 +57,7 @@ const OCEAN_TEXT_COLOR: Record<string, string> = {
 
 const OCEAN_CAPTION: Record<string, string> = {
   'Laut-Senja': 'Seni senja di ujung arus',
-  'Telaga-Senyap': 'Sunyi di tengah tenang',
+  'Telaga-Senyap': 'Sunyi di hulu arus telaga',
   'default': 'Cabang laut PesanBotol',
 };
 

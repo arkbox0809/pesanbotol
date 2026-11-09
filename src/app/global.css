@@ -102,7 +102,109 @@
   .animate-wave,
   .animate-fade-in,
   .animate-bottle-bob,
-  .animate-tether-flow {
+  .animate-tether-flow,
+  .animate-hoverfirefly-3,
+  .animate-hoverfirefly-4,
+  .animate-hoverfirefly-5,
+  .animate-flyfirefly-3,
+  .animate-flyfirefly-5,
+  .animate-flyfirefly-6,
+  .animate-flyfirefly-7,
+  .animate-flyfirefly-8,
+  .animate-wingflap,
+  .animate-floatleaf-6s,
+  .animate-floatleaf-7s,
+  .animate-floatleaf-8s,
+  .animate-floatleaf-9s,
+  .animate-pulse-4s,
+  .animate-pulse-5s {
     animation: none;
   }
+}
+
+/* Keyframe animations for OceanFeed component */
+@keyframes hover-firefly {
+  0% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; will-change: transform; }
+  10% { opacity: 0.9; }
+  25% { transform: translateX(calc(50vw - 10%)) translateY(-15px) rotate(5deg); }
+  50% { transform: translateX(calc(75vw - 10%)) translateY(15px) rotate(-3deg); }
+  75% { transform: translateX(calc(90vw - 10%)) translateY(-10px) rotate(3deg); }
+  90% { opacity: 0.9; }
+  100% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; }
+}
+
+@keyframes fly-firefly {
+  0% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; will-change: transform; }
+  10% { opacity: 0.9; }
+  25% { transform: translateX(calc(50vw - 10%)) translateY(-15px) rotate(5deg); }
+  50% { transform: translateX(calc(75vw - 10%)) translateY(15px) rotate(-3deg); }
+  75% { transform: translateX(calc(90vw - 10%)) translateY(-10px) rotate(3deg); }
+  90% { opacity: 0.9; }
+  100% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; }
+}
+
+@keyframes pulseSlow {
+  0%, 100% { transform: scale(1); opacity: 0.15; }
+  50% { transform: scale(1.05); opacity: 0.25; }
+}
+
+@keyframes wingFlap {
+  0%, 100% { transform: scaleY(1) rotate(0deg); }
+  50% { transform: scaleY(0.3) rotate(10deg); }
+}
+
+@keyframes floatLeaf {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(3deg); }
+}
+
+.animate-pulse-4s {
+  animation: pulseSlow 4s ease-in-out infinite alternate;
+}
+
+.animate-pulse-5s {
+  animation: pulseSlow 5s ease-in-out infinite alternate;
+}
+
+.animate-hoverfirefly-3 {
+  animation: hover-firefly 3s ease-in-out infinite;
+}
+.animate-hoverfirefly-4 {
+  animation: hover-firefly 4s ease-in-out infinite;
+}
+.animate-hoverfirefly-5 {
+  animation: hover-firefly 5s ease-in-out infinite;
+}
+
+.animate-flyfirefly-3 {
+  animation: fly-firefly 3s ease-in-out infinite;
+}
+.animate-flyfirefly-5 {
+  animation: fly-firefly 5s ease-in-out infinite;
+}
+.animate-flyfirefly-6 {
+  animation: fly-firefly 6s ease-in-out infinite;
+}
+.animate-flyfirefly-7 {
+  animation: fly-firefly 7s ease-in-out infinite;
+}
+.animate-flyfirefly-8 {
+  animation: fly-firefly 8s ease-in-out infinite;
+}
+
+.animate-wingflap {
+  animation: wingFlap 0.3s ease-in-out infinite alternate;
+}
+
+.animate-floatleaf-6s {
+  animation: floatLeaf 6s ease-in-out infinite;
+}
+.animate-floatleaf-7s {
+  animation: floatLeaf 7s ease-in-out infinite;
+}
+.animate-floatleaf-8s {
+  animation: floatLeaf 8s ease-in-out infinite;
+}
+.animate-floatleaf-9s {
+  animation: floatLeaf 9s ease-in-out infinite;
 }

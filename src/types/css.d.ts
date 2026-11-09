@@ -1,1 +1,1 @@
-mkdir -p ;/types && echo 'declare module "*.css";' > src/types/css.d.ts;
+declare module "*.css";

@@ -470,10 +470,10 @@ export default function Home() {
       {/* 2. Judul / Header Minimalist di Pojok */}
       <div className="absolute top-6 left-6 z-10">
         <h1 className="text-2xl font-serif font-bold text-white tracking-wider drop-shadow-md">
-          PesanBotol
+          Lautan Harapan
         </h1>
         <p className="max-w-[calc(100vw-10rem)] text-xs leading-relaxed text-sky-200/70 font-mono tracking-wide sm:max-w-none">
-          Tempat membuang rahasia dan harapan ke arus waktu.
+          Tempat membuang harapan ke arus waktu.
         </p>
         <div className="mt-2">
           <DailyStreakPill />

@@ -206,8 +206,13 @@ export async function getAvailableOceans(): Promise<OceanBranch[]> {
  * Mengambil botol dari cabang laut tertentu, difilter is_hidden = false
  * dan excludes botol biasa yang sudah expired (lebih dari 3 hari).
  * Parameter `ocean` boleh null/undefined untuk mengambil semua botol tanpa laut.
+ * Parameter `limit` membatasi jumlah baris yang diambil dari database agar
+ * query tidak membebani tabel saat jumlah botol sudah besar.
  */
-export async function getBottlesByOcean(ocean: string | null | undefined): Promise<BottleRow[]> {
+export async function getBottlesByOcean(
+  ocean: string | null | undefined,
+  limit: number = 200
+): Promise<BottleRow[]> {
   if (!supabase) {
     return []
   }
@@ -218,6 +223,8 @@ export async function getBottlesByOcean(ocean: string | null | undefined): Promi
     .eq('is_hidden', false)
     // Botol spesial (expires_at NULL) tidak kedaluwarsa; botol biasa sudah expired dihilangkan
     .or('expires_at.is.null,expires_at.gt.now()')
+    .order('created_at', { ascending: false })
+    .limit(limit)
 
   if (ocean) {
     query = query.eq('laut', ocean)
@@ -225,7 +232,7 @@ export async function getBottlesByOcean(ocean: string | null | undefined): Promi
     query = query.is('laut', null)
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false })
+  const { data, error } = await query
 
   if (error) {
     console.error('[PesanBotol] Gagal mengambil botol per laut:', error)

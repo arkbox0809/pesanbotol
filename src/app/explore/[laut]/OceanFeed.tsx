@@ -55,6 +55,12 @@ const OCEAN_TEXT_COLOR: Record<string, string> = {
   'Telaga-Senyap': 'text-cyan-100',
 };
 
+const OCEAN_CAPTION: Record<string, string> = {
+  'Laut-Senja': 'Seni senja di ujung arus',
+  'Telaga-Senyap': 'Sunyi di tengah tenang',
+  'default': 'Cabang laut PesanBotol',
+};
+
 function getFeedErrorMessage(error: unknown, timedOut: boolean): string {
   if (timedOut) {
     return 'Koneksi ke sungai terlalu lama. Periksa jaringan lalu coba muat ulang.';
@@ -381,9 +387,9 @@ export function OceanFeed({ ocean }: { ocean: string }) {
       <div className="absolute inset-0 opacity-10 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent)] animate-wave pointer-events-none" />
 
       {/* Laut Senja: efek kilau senja sore dan capung kartun terbang di tepi laut */}
-      {ocean === 'Laut-Senja' && (
-        <>
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,#fbbf24_15%,transparent_60%)] animate-[pulse_4s_ease-in-out_infinite]" />
+{ocean === 'Laut-Senja' && (
+         <>
+           <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,#fbbf24_15%,transparent_60%)] animate-pulse-4s" />
 
            {/* Komponen capung kartun: badan + dua sayap + antenna */}
            {[
@@ -397,7 +403,7 @@ export function OceanFeed({ ocean }: { ocean: string }) {
            ].map((f) => (
             <div
               key={f.id}
-              className={`absolute ${f.top} ${f.left} z-50 pointer-events-none animate-[${f.anim}_${f.dur}_ease-in-out_infinite]`}
+              className={`absolute ${f.top} ${f.left} z-50 pointer-events-none ${f.anim === 'hoverFirefly' ? 'animate-hoverfirefly-' + f.dur.replace('s', '') : 'animate-flyfirefly-' + f.dur.replace('s', '')}`}
               style={{ animationDelay: f.delay }}
             >
               {/* Badan capung */}
@@ -405,9 +411,9 @@ export function OceanFeed({ ocean }: { ocean: string }) {
                 <div className="w-1.5 h-3 rounded-full bg-orange-700" />
               </div>
               {/* Sayap kiri */}
-              <div className="absolute -left-1.5 -top-0.5 w-4 h-1.5 rounded-full bg-orange-400/60 animate-[wingFlap_2s_ease-in-out_infinite]" />
+              <div className="absolute -left-1.5 -top-0.5 w-4 h-1.5 rounded-full bg-orange-400/60 animate-wingflap" />
               {/* Sayap kanan */}
-              <div className="absolute -right-1.5 -top-0.5 w-4 h-1.5 rounded-full bg-orange-400/60 animate-[wingFlap_2s_ease-in-out_infinite]" />
+              <div className="absolute -right-1.5 -top-0.5 w-4 h-1.5 rounded-full bg-orange-400/60 animate-wingflap" />
               {/* Antenna kiri */}
               <div className="absolute -top-1.5 -left-0.5 w-1 h-1 rounded-full bg-orange-600" />
               {/* Antenna kanan */}
@@ -415,99 +421,73 @@ export function OceanFeed({ ocean }: { ocean: string }) {
             </div>
           ))}
 
-          <style>
-            {`
-               @keyframes flyFirefly {
-                 0% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; will-change: transform; }
-                 10% { opacity: 0.9; }
-                 25% { transform: translateX(calc(50vw - 10%)) translateY(-15px) rotate(5deg); }
-                 50% { transform: translateX(calc(75vw - 10%)) translateY(15px) rotate(-3deg); }
-                 75% { transform: translateX(calc(90vw - 10%)) translateY(-10px) rotate(3deg); }
-                 90% { opacity: 0.9; }
-                 100% { transform: translateX(-10%) translateY(0) rotate(-5deg); opacity: 0; }
-               }
-               @keyframes wingFlap {
-                 0%, 100% { transform: scaleX(1); opacity: 0.6; }
-                 50% { transform: scaleX(0.3); opacity: 0.4; }
-               }
-            `}
-          </style>
-        </>
-      )}
+         </>
+       )}
 
       {/* Telaga Senyap: daun-daun yang melayang mengikuti arus */}
-      {ocean === 'Telaga-Senyap' && (
-        <>
-          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(circle_at_center,#bae6fd_15%,transparent_60%)] animate-[pulse_5s_ease-in-out_infinite]" />
-          <div className="absolute top-1/4 left-10 w-5 h-2 rounded-full bg-emerald-400/80 animate-[floatLeaf_6s_ease-in-out_infinite]" style={{ animationDelay: '0s' }} />
-          <div className="absolute top-1/3 right-20 w-6 h-3 rounded-full bg-emerald-300/70 animate-[floatLeaf_8s_ease-in-out_infinite]" style={{ animationDelay: '2s' }} />
-          <div className="absolute top-2/5 left-40 w-4 h-2 rounded-full bg-emerald-200/60 animate-[floatLeaf_7s_ease-in-out_infinite]" style={{ animationDelay: '4s' }} />
-          <div className="absolute top-3/5 right-10 w-5 h-2.5 rounded-full bg-emerald-400/80 animate-[floatLeaf_9s_ease-in-out_infinite]" style={{ animationDelay: '1s' }} />
-          <div className="absolute top-4/5 left-60 w-4 h-2 rounded-full bg-emerald-300/70 animate-[floatLeaf_6s_ease-in-out_infinite]" style={{ animationDelay: '3s' }} />
-          <style>
-            {`
-              @keyframes floatLeaf {
-                0% { transform: translateX(110vw) translateY(0) rotate(0deg); opacity: 0; }
-                10% { opacity: 0.8; }
-                90% { opacity: 0.8; }
-                100% { transform: translateX(-20vw) translateY(60px) rotate(360deg); opacity: 0; }
-              }
-            `}
-          </style>
-        </>
-      )}
+ {/* Telaga Senyap: daun-daun yang melayang mengikuti arus */}
+       {ocean === 'Telaga-Senyap' && (
+         <>
+           <div className="absolute inset-0 opacity-15 bg-[radial-gradient(circle_at_center,#bae6fd_15%,transparent_60%)] animate-pulse-5s" />
+           <div className="absolute top-1/4 left-10 w-5 h-2 rounded-full bg-emerald-400/80 animate-floatleaf-6s" style={{ animationDelay: '0s' }} />
+           <div className="absolute top-1/3 right-20 w-6 h-3 rounded-full bg-emerald-300/70 animate-floatleaf-8s" style={{ animationDelay: '2s' }} />
+           <div className="absolute top-2/5 left-40 w-4 h-2 rounded-full bg-emerald-200/60 animate-floatleaf-7s" style={{ animationDelay: '4s' }} />
+           <div className="absolute top-3/5 right-10 w-5 h-2.5 rounded-full bg-emerald-400/80 animate-floatleaf-9s" style={{ animationDelay: '1s' }} />
+           <div className="absolute top-4/5 left-60 w-4 h-2 rounded-full bg-emerald-300/70 animate-floatleaf-6s" style={{ animationDelay: '3s' }} />
+         </>
+       )}
 
-      {/* Judul / Header di pojok kiri */}
-      <div className="absolute top-6 left-6 z-10 flex flex-col gap-1">
-        <h1 className={`font-serif text-2xl font-bold tracking-wider drop-shadow-md ${oceanText}`}>
-          {oceanLabel}
-        </h1>
-        <p className="text-xs font-mono tracking-wide text-white/70">
-          Cabang laut PesanBotol
-        </p>
-        <DailyStreakPill />
-      </div>
+       {/* Judul / Header di pojok kiri */}
+       <div className="absolute top-6 left-6 z-10 flex flex-col gap-1">
+         <h1 className={`font-serif text-2xl font-bold tracking-wider drop-shadow-md ${oceanText}`}>
+           {oceanLabel}
+         </h1>
+         <p className="text-xs font-mono tracking-wide text-white/70">
+           {OCEAN_CAPTION[ocean] ?? OCEAN_CAPTION['default']}
+         </p>
+         <DailyStreakPill />
+       </div>
 
-      {/* Tombol navigasi di pojok kanan */}
-      {/* Desktop: tombol navigasi horizontal (sembunyi di mobile) */}
-      <div className="hidden lg:flex absolute top-6 right-6 z-10 flex items-center gap-2">
-        <NotificationBell
-          onReplyClick={() => {
-            // Tidak ada highlight di halaman explore
-          }}
-        />
-        <button
-          type="button"
-          aria-label="Dukung Arus"
-          aria-haspopup="dialog"
-          aria-expanded={isSupportOpen}
-          title="Dukung Arus"
-          onClick={() => setIsSupportOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-full border border-sky-200/50 bg-sky-100/90 p-2.5 text-sm font-medium text-sky-950 shadow-lg backdrop-blur-sm transition-colors hover:bg-sky-50 lg:px-4 lg:py-2.5"
-        >
-          <Heart size={18} aria-hidden="true" />
-          <span className="hidden lg:inline">Dukung Arus</span>
-        </button>
-        <Link
-          href="/write"
-          aria-label="Hanyutkan Pesan"
-          title="Hanyutkan Pesan"
-          className="flex items-center justify-center gap-2 rounded-full border border-amber-300/50 bg-amber-500/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-amber-500 lg:px-5 lg:py-2.5"
-        >
-          <PenLine size={18} strokeWidth={2.2} aria-hidden="true" />
-          <span className="hidden lg:inline">Hanyutkan Pesan</span>
-        </Link>
-        <Link
-          href="/explore"
-          aria-label="Kembali ke Daftar Laut"
-          title="Kembali ke Daftar Laut"
-          className="flex items-center justify-center gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-200 lg:px-4 lg:py-2.5"
-        >
-          <Compass size={18} aria-hidden="true" />
-          <span className="hidden lg:inline">Kembali</span>
-        </Link>
-        <LegalMenu />
-      </div>
+       {/* Tombol navigasi di pojok kanan */}
+       {/* Desktop: tombol navigasi horizontal (sembunyi di mobile) */}
+       <div className="hidden lg:flex absolute top-6 right-6 z-10 flex items-center gap-2">
+         <NotificationBell
+           onReplyClick={() => {
+             // Tidak ada highlight di halaman explore
+           }}
+         />
+         <button
+           type="button"
+           aria-label="Dukung Arus"
+           aria-haspopup="dialog"
+           aria-expanded={isSupportOpen}
+           title="Dukung Arus"
+           onClick={() => setIsSupportOpen(true)}
+           className="flex items-center justify-center gap-2 rounded-full border border-sky-200/50 bg-sky-100/90 p-2.5 text-sm font-medium text-sky-950 shadow-lg backdrop-blur-sm transition-colors hover:bg-sky-50 lg:px-4 lg:py-2.5"
+         >
+           <Heart size={18} aria-hidden="true" />
+           <span className="hidden lg:inline">Dukung Arus</span>
+         </button>
+         <Link
+           href="/write"
+           aria-label="Hanyutkan Pesan"
+           title="Hanyutkan Pesan"
+           className="flex items-center justify-center gap-2 rounded-full border border-amber-300/50 bg-amber-500/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-all hover:bg-amber-500 lg:px-5 lg:py-2.5"
+         >
+           <PenLine size={18} strokeWidth={2.2} aria-hidden="true" />
+           <span className="hidden lg:inline">Hanyutkan Pesan</span>
+         </Link>
+         <Link
+           href="/explore"
+           aria-label="Kembali ke Daftar Laut"
+           title="Kembali ke Daftar Laut"
+           className="flex items-center justify-center gap-2 rounded-full border border-slate-200/50 bg-slate-100/90 p-2.5 text-sm font-medium text-slate-900 shadow-lg backdrop-blur-sm transition-colors hover:bg-slate-200 lg:px-4 lg:py-2.5"
+         >
+           <Compass size={18} aria-hidden="true" />
+           <span className="hidden lg:inline">Kembali</span>
+         </Link>
+         <LegalMenu />
+       </div>
 
       {/* Mobile: hamburger menu (sembunyi di desktop).
            Overlay dan panel menu di-portal ke luar stacking context navbar

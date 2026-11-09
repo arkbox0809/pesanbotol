@@ -5,7 +5,7 @@ import SwRegister from '@/components/SwRegister';
 import { DailyStreakProvider } from '@/components/DailyStreakProvider';
 
 export const metadata: Metadata = {
-  title: 'PesanBotol',
+  title: 'Lautan Harapan',
   description: 'Tempat membuang rahasia dan harapan ke arus waktu.',
 };
 
